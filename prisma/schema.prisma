@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+    // Further reading:
+    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id             String   @id @default(cuid())
+    email          String   @unique
+    hashedPassword String
+    name           String?
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    // Track failed login attempts and lockout info
+    failedLoginAttempts Int       @default(0)
+    lockedUntil         DateTime?
+
+    // Roles assigned to the user (for RBAC)
+    roles Role[] @relation("UserRoles")
+
+    // Historical and one-time passwords
+    passwords UserPassword[]
+}
+
+model UserPassword {
+    id String @id @default(cuid())
+
+    // Link to the user
+    user   User   @relation(fields: [userId], references: [id])
+    userId String
+
+    // The stored password hash
+    hashedPassword String
+
+    // When this password record was created (useful for history tracking)
+    createdAt DateTime @default(now())
+
+    // Flag to indicate whether this is a one-time password
+    isOneTime Boolean @default(false)
+
+    // For one-time passwords: whether this token has been used
+    used Boolean @default(false)
+
+    // Optional expiration date for one-time passwords
+    expiresAt DateTime?
+}
+
+model Role {
+    id   String @id @default(cuid())
+    name String @unique
+
+    // Users that have this role
+    users User[] @relation("UserRoles")
+
+    // Permissions granted to this role
+    permissions Permission[] @relation("RolePermissions")
+}
+
+model Permission {
+    id   String @id @default(cuid())
+    name String @unique
+
+    // Roles that include this permission
+    roles Role[] @relation("RolePermissions")
+}
+
+/// A generic settings table to store key-value configuration pairs.
+/// Use this table to configure options like the maximum number of historical
+/// passwords or the maximum failed login attempts before lockout.
+model Setting {
+    id    String @id @default(cuid())
+    name  String @unique
+    value String
+}
