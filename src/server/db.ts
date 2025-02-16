@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
 import { env } from "~/env";
+import {seedDefaultData} from "~/server/initialize-database";
 
 const createPrismaClient = () =>
   new PrismaClient({
@@ -15,3 +16,14 @@ const globalForPrisma = globalThis as unknown as {
 export const db = globalForPrisma.prisma ?? createPrismaClient();
 
 if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+
+// Ensure seeding happens only once per process.
+// Disable the rules for this block to avoid linting errors.
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+if (!(global as any).__seededDefaults) {
+    (global as any).__seededDefaults = true;
+    seedDefaultData(db).catch((error) => {
+        console.error("Error seeding default roles and permissions:", error);
+    });
+}

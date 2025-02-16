@@ -1,12 +1,20 @@
 "use client";
 
-import {zodResolver} from "@hookform/resolvers/zod";
-import {Alert, Button, Container, Paper, PasswordInput, TextInput, Title} from "@mantine/core";
-import {signIn} from "next-auth/react";
-import {useRouter} from "next/navigation";
-import {useState} from "react";
-import {useForm} from "react-hook-form";
-import {SignInFormValues, signInSchema} from "~/app/auth/signin/validation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+    Container,
+    Paper,
+    Title,
+    TextInput,
+    PasswordInput,
+    Button,
+    Alert,
+} from "@mantine/core";
+import { signInSchema, type SignInFormValues } from "~/types/signIn";
 
 export default function SignInForm() {
     const [error, setError] = useState<string | null>(null);
@@ -15,26 +23,26 @@ export default function SignInForm() {
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting}
+        formState: { errors, isSubmitting, isDirty, isValid },
     } = useForm<SignInFormValues>({
         resolver: zodResolver(signInSchema),
-        mode: "onTouched"
     });
 
-    const onSubmit = async (values: SignInFormValues) => {
+    const onSubmit = async (data: SignInFormValues) => {
         setError(null);
         const res = await signIn("credentials", {
             redirect: false,
-            email: values.email,
-            password: values.password
+            email: data.email,
+            password: data.password,
         });
 
-        if (res?.ok) {
-            router.push("/");
-        } else {
+        // If NextAuth returns an error, display it in the form.
+        if (res?.error) {
             setError("Invalid email or password");
+        } else if (res?.ok) {
+            router.push("/");
         }
-    }
+    };
 
     return (
         <Container size={420} my={40}>
@@ -62,7 +70,7 @@ export default function SignInForm() {
                         mt="md"
                     />
 
-                    <Button fullWidth mt="xl" type="submit" loading={isSubmitting}>
+                    <Button fullWidth mt="xl" type="submit" loading={isSubmitting} disabled={isSubmitting || !isDirty || !isValid}>
                         Sign In
                     </Button>
                 </form>
