@@ -31,7 +31,6 @@
     "@mantine/notifications": "^7.16.3",
     "@mantine/nprogress": "^7.16.3",
     "@mantine/tiptap": "^7.16.3",
-    "@prisma/client": "^5.14.0",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
     "@tiptap/extension-link": "^2.11.5",
@@ -57,6 +56,7 @@
     "zod": "^3.23.3"
   },
   "devDependencies": {
+    "@prisma/client": "^6.3.1",
     "@types/eslint": "^8.56.10",
     "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
@@ -68,11 +68,18 @@
     "postcss": "^8.5.2",
     "postcss-preset-mantine": "^1.17.0",
     "postcss-simple-vars": "^7.0.1",
-    "prisma": "^5.14.0",
+    "prisma": "^6.3.1",
     "typescript": "^5.5.3"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"
   },
-  "packageManager": "pnpm@10.1.0"
+  "packageManager": "pnpm@10.4.1",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "@prisma/client"
+    ]
+  }
 }

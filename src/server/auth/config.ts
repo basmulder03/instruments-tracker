@@ -1,3 +1,4 @@
+import {type DefaultJWT} from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
@@ -21,14 +22,22 @@ type Role = {
 declare module "next-auth" {
     interface User {
         roles?: Role[];
-        permissions?: Permission[];
+    }
+
+    interface JWT extends DefaultJWT {
+        roles: string[];
+        permissions: string[];
+    }
+
+    interface SessionUser {
+        roles: string[];
+        permissions: string[];
     }
 
     interface Session extends DefaultSession {
-        user: User & DefaultSession["user"];
+        user: SessionUser & DefaultSession["user"];
     }
 }
-
 
 /**
  * NextAuth configuration options.
@@ -88,11 +97,13 @@ export const authConfig = {
             // When first signing in, add user details (including roles and permissions) to the JWT.
             if (user) {
                 token.id = user.id;
-                token.roles = user.roles;
-                token.permissions = user.roles?.flatMap((role) => role.permissions);
+
+                token.roles = user.roles?.map((role) => role.name) ?? [];
+                token.permissions = user.roles?.flatMap((role) => role.permissions) ?? [];
             }
             return token;
         },
+        // @ts-expect-error really not sure why this is throwing an error
         async session({ session, token }) {
             return {
                 ...session,
@@ -101,8 +112,8 @@ export const authConfig = {
                     // Cast token.id to string to satisfy the type requirement.
                     id: token.id as string,
                     name: token.name,
-                    roles: token.roles.map((role) => role.name),
-                    permissions: token.permissions.map((permission) => permission.name),
+                    roles: token.roles,
+                    permissions: token.permissions,
                 },
             };
         },

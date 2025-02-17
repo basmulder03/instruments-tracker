@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-
+import {PrismaClient} from "@prisma/client";
 import { env } from "~/env";
-import {seedDefaultData} from "~/server/initialize-database";
+import {DataSeeder} from "~/server/initialize-database";
 
 const createPrismaClient = () =>
   new PrismaClient({
@@ -23,7 +22,7 @@ if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 if (!(global as any).__seededDefaults) {
     (global as any).__seededDefaults = true;
-    seedDefaultData(db).catch((error) => {
-        console.error("Error seeding default roles and permissions:", error);
+    DataSeeder.seedDefaultData(db).catch((error) => {
+        console.error("Error seeding database:", error);
     });
 }
