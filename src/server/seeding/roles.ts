@@ -1,4 +1,4 @@
-import {PermissionName} from "~/server/permissions";
+import {PermissionName} from "~/server/seeding/permissions";
 
 export interface DefaultRole {
     name: string;

@@ -1,4 +1,4 @@
-import { randomInt } from 'crypto';
+const randomInt = (max: number): number => Math.floor(Math.random() * max);
 
 /**
  * Generates a secure password.
