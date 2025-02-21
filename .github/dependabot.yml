@@ -12,9 +12,9 @@ updates:
     groups:
       patch-and-minor:
         update-types:
-          - "version-update:semver-patch"
-          - "version-update:semver-minor"
+          - "patch"
+          - "minor"
       major:
         update-types:
-          - "version-update:semver-major"
+          - "major"
 
