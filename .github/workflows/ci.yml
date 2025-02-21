@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set environment variables
+        run: echo "AUTH_SECRET=dummy_auth_secret" >> $GITHUB_ENV
+        run: echo "DATABASE_URL=dummy_database_url" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -32,7 +36,3 @@ jobs:
 
       - name: Run tests
         run: pnpm test
-
-      - name: Set environment variables
-        run: echo "AUTH_SECRET=dummy_auth_secret" >> $GITHUB_ENV
-        run: echo "DATABASE_URL=dummy_database_url" >> $GITHUB_ENV
