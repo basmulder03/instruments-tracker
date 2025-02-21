@@ -5,7 +5,16 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm"         # or your ecosystem (e.g. "bundler", "maven", "docker", etc.)
+    directory: "/"                   # location of your package manifest
     schedule:
-      interval: "weekly"
+      interval: "weekly"             # adjust the interval as needed
+    groups:
+      patch-and-minor:
+        update-types:
+          - "patch"
+          - "minor"
+      major:
+        update-types:
+          - "major"
+
