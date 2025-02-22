@@ -1,5 +1,15 @@
 import {type PrismaClient} from "@prisma/client";
 
+export const mutationEntityNames = [
+    "Database Seeder",
+    "Admin Setup",
+    "Auth Module"
+] as const;
+
+export type MutationEntity = typeof mutationEntityNames[number];
+
+export const mutationEntityList: MutationEntity[] = [...mutationEntityNames];
+
 class MutationLog {
     static systemUserId: string;
 
@@ -10,7 +20,7 @@ class MutationLog {
      * @param entity
      * @param mutation
      */
-    async addMutationLog(db: PrismaClient, userId: string, entity: string, mutation: string): Promise<void> {
+    async addMutationLog(db: PrismaClient, userId: string, entity: MutationEntity, mutation: string): Promise<void> {
         await db.mutationLog.create({
             data: {
                 entity,
