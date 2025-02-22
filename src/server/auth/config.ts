@@ -5,6 +5,7 @@ import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import { compare } from "bcryptjs";
 
 import { db } from "~/server/db";
+import {mutationLog} from "~/server/helpers/mutationLog";
 import { signInSchema } from "~/types/signIn";
 
 type Permission = {
@@ -81,6 +82,9 @@ export const authConfig = {
                 if (!user || !(await compare(parsedCredentials.password, user.hashedPassword))) {
                     return null;
                 }
+
+                // Log the sign-in event.
+                await mutationLog.addMutationLog(db, user.id, "Auth Module", `User: ${user.id} signed in`);
 
                 return user;
             },
