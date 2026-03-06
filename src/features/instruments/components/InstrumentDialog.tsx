@@ -37,6 +37,8 @@ const schema = z.object({
   purchaseCost: z.coerce.number().min(0, 'Must be ≥ 0'),
   usefulLifeYears: z.coerce.number().int().min(1, 'Must be ≥ 1'),
   salvageValue: z.coerce.number().min(0, 'Must be ≥ 0'),
+  // CHECKED_OUT is intentionally excluded: status must only change via
+  // the Check Out / Return operations so that a Movement record is always created.
   currentStatus: z.enum(['IN_STORAGE', 'CHECKED_OUT', 'IN_REPAIR']),
   currentLocationId: z.string(),
   currentPersonId: z.string(),
@@ -85,7 +87,12 @@ export function InstrumentDialog({
       setError(null)
       try {
         const parsed = schema.parse(value)
-        const input: InstrumentInput = parsed
+        // Enforce: new instruments always start IN_STORAGE with no person assigned.
+        // Checked-out instruments retain their status unchanged (read-only in UI).
+        const input: InstrumentInput = {
+          ...parsed,
+          ...(isEdit ? {} : { currentStatus: 'IN_STORAGE', currentPersonId: '' }),
+        }
         if (isEdit) {
           await updateInstrument(instrument.id, input)
         } else {
@@ -173,14 +180,35 @@ export function InstrumentDialog({
             {(f) => (
               <div className="space-y-1.5">
                 <Label>Status</Label>
-                  <Select value={f.state.value} onValueChange={(v) => f.handleChange(v as 'IN_STORAGE' | 'CHECKED_OUT' | 'IN_REPAIR')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="IN_STORAGE">In storage</SelectItem>
-                    <SelectItem value="CHECKED_OUT">Checked out</SelectItem>
-                    <SelectItem value="IN_REPAIR">In repair</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* New instruments always start IN_STORAGE — status changes via
+                    Check Out / Return operations only, to keep Movement records
+                    in sync. When editing a checked-out instrument the field is
+                    read-only to prevent a limbo state. */}
+                {!isEdit ? (
+                  <p className="text-sm text-muted-foreground border rounded-md px-3 py-2 bg-muted">
+                    In storage
+                  </p>
+                ) : f.state.value === 'CHECKED_OUT' ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground border rounded-md px-3 py-2 bg-muted">
+                      Checked out
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      Status is managed by Check Out / Return operations and cannot be changed here.
+                    </p>
+                  </div>
+                ) : (
+                  <Select
+                    value={f.state.value}
+                    onValueChange={(v) => f.handleChange(v as 'IN_STORAGE' | 'IN_REPAIR')}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IN_STORAGE">In storage</SelectItem>
+                      <SelectItem value="IN_REPAIR">In repair</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
           </form.Field>
