@@ -9,6 +9,7 @@ import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/config/firebase';
 import type { User } from '@/lib/types/users';
+import i18n from '@/i18n';
 
 // ---------------------------------------------------------------------------
 // Context value
@@ -53,6 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
               document.documentElement.classList.remove('dark');
             }
+          }
+
+          // Sync language preference from Firestore
+          const language = userData.preferences?.language;
+          if (language) {
+            i18n.changeLanguage(language);
+            localStorage.setItem('language', language);
           }
 
           // Update lastLoginAt on each sign-in

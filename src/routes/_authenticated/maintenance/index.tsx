@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Search, History, Download } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -24,21 +25,22 @@ export const Route = createFileRoute('/_authenticated/maintenance/')({
   component: MaintenancePage,
 })
 
-const CATEGORY_LABEL: Record<string, string> = {
-  PADS: 'Pads',
-  OVERHAUL: 'Overhaul',
-  ADJUSTMENT: 'Adjustment',
-  CLEANING: 'Cleaning',
-  REPAIR_OTHER: 'Repair / Other',
-}
-
 function fmtDate(iso: string) {
   if (!iso) return '—'
   try { return format(parseISO(iso), 'PP') } catch { return iso }
 }
 
 function MaintenancePage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
+
+  const CATEGORY_LABEL: Record<string, string> = {
+    PADS: t('maintenance.cat.pads'),
+    OVERHAUL: t('maintenance.cat.overhaul'),
+    ADJUSTMENT: t('maintenance.cat.adjustment'),
+    CLEANING: t('maintenance.cat.cleaning'),
+    REPAIR_OTHER: t('maintenance.cat.repair'),
+  }
 
   const { data: records = [], isLoading } = useQuery({ queryKey: ['maintenance'], queryFn: listAllMaintenance })
   const { data: instruments = [] } = useQuery({ queryKey: ['instruments'], queryFn: listInstruments })
@@ -74,14 +76,14 @@ function MaintenancePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Maintenance</h1>
+          <h1 className="text-2xl font-bold">{t('maintenance.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            All maintenance records across all instruments.
+            {t('maintenance.subtitle')}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleExport} disabled={records.length === 0}>
           <Download className="mr-2 size-4" />
-          Export CSV
+          {t('common.exportCsv')}
         </Button>
       </div>
 
@@ -89,7 +91,7 @@ function MaintenancePage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search maintenance…"
+          placeholder={t('maintenance.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -99,13 +101,13 @@ function MaintenancePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Instrument</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Cost</TableHead>
-              <TableHead>Major</TableHead>
-              <TableHead>Performed</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead>{t('common.id')}</TableHead>
+              <TableHead>{t('maintenance.col.instrument')}</TableHead>
+              <TableHead>{t('maintenance.col.category')}</TableHead>
+              <TableHead>{t('maintenance.col.cost')}</TableHead>
+              <TableHead>{t('maintenance.col.major')}</TableHead>
+              <TableHead>{t('maintenance.col.performed')}</TableHead>
+              <TableHead>{t('common.notes')}</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -115,7 +117,7 @@ function MaintenancePage() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  {search ? 'No records match your search.' : 'No maintenance records yet.'}
+                  {search ? t('maintenance.empty.search') : t('maintenance.empty.data')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -134,7 +136,7 @@ function MaintenancePage() {
                   <TableCell>{CATEGORY_LABEL[r.data.category] ?? r.data.category}</TableCell>
                   <TableCell>€{r.data.cost.toFixed(2)}</TableCell>
                   <TableCell>
-                    {r.data.isMajor && <Badge variant="destructive" className="text-xs">Major</Badge>}
+                    {r.data.isMajor && <Badge variant="destructive" className="text-xs">{t('maintenance.badge.major')}</Badge>}
                   </TableCell>
                   <TableCell>{fmtDate(r.data.performedAt)}</TableCell>
                   <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
@@ -144,7 +146,7 @@ function MaintenancePage() {
                     <Button variant="ghost" size="icon" asChild>
                       <Link to="/instruments/$instrumentId" params={{ instrumentId: r.data.instrumentId }}>
                         <History className="size-4" />
-                        <span className="sr-only">View instrument history</span>
+                        <span className="sr-only">{t('maintenance.viewHistoryLabel')}</span>
                       </Link>
                     </Button>
                   </TableCell>

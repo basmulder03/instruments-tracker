@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Search, History, Download } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -32,6 +33,7 @@ function fmtDate(iso: string) {
 }
 
 function MovementsPage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
 
   const { data: movements = [], isLoading } = useQuery({ queryKey: ['movements'], queryFn: listMovements })
@@ -74,14 +76,14 @@ function MovementsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Movements</h1>
+          <h1 className="text-2xl font-bold">{t('movements.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            All checkout and return transactions.
+            {t('movements.subtitle')}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleExport} disabled={movements.length === 0}>
           <Download className="mr-2 size-4" />
-          Export CSV
+          {t('common.exportCsv')}
         </Button>
       </div>
 
@@ -89,7 +91,7 @@ function MovementsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search movements…"
+          placeholder={t('movements.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -99,13 +101,13 @@ function MovementsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Instrument</TableHead>
-              <TableHead>Person</TableHead>
-              <TableHead>Checked out</TableHead>
-              <TableHead>Returned</TableHead>
-              <TableHead>Return location</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t('common.id')}</TableHead>
+              <TableHead>{t('movements.col.instrument')}</TableHead>
+              <TableHead>{t('movements.col.person')}</TableHead>
+              <TableHead>{t('movements.col.checkedOut')}</TableHead>
+              <TableHead>{t('movements.col.returned')}</TableHead>
+              <TableHead>{t('movements.col.returnLocation')}</TableHead>
+              <TableHead>{t('movements.col.status')}</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -115,7 +117,7 @@ function MovementsPage() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                  {search ? 'No movements match your search.' : 'No movements yet.'}
+                  {search ? t('movements.empty.search') : t('movements.empty.data')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -144,7 +146,7 @@ function MovementsPage() {
                     <Button variant="ghost" size="icon" asChild>
                       <Link to="/instruments/$instrumentId" params={{ instrumentId: m.data.instrumentId }}>
                         <History className="size-4" />
-                        <span className="sr-only">View instrument history</span>
+                        <span className="sr-only">{t('movements.viewHistoryLabel')}</span>
                       </Link>
                     </Button>
                   </TableCell>

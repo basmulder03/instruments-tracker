@@ -3,6 +3,7 @@ import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -27,19 +28,20 @@ import { inviteUser } from '@/features/users/services/invitationService'
 import { SYSTEM_ROLES } from '@/lib/roles'
 import { useAuth } from '@/contexts/AuthContext'
 
-const schema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  role: z.string().min(1, 'Select a role'),
-})
-
 interface InviteUserDialogProps {
   onInvited?: () => void
 }
 
 export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const schema = z.object({
+    email: z.string().email(t('inviteDialog.validEmail')),
+    role: z.string().min(1, t('inviteDialog.validRole')),
+  })
 
   const form = useForm({
     defaultValues: { email: '', role: '' },
@@ -54,7 +56,7 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
         )
         const inviteUrl = `${window.location.origin}/auth/accept-invitation?token=${token}`
         toast.success(
-          `Invitation created for ${parsed.email} (${invitationId}). Share the invite link.`,
+          t('inviteDialog.toast', { email: parsed.email, invitationId }),
           { description: inviteUrl, duration: 10000 },
         )
         form.reset()
@@ -81,16 +83,15 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="mr-2 size-4" />
-          Invite user
+          {t('inviteDialog.trigger')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite a new user</DialogTitle>
+          <DialogTitle>{t('inviteDialog.title')}</DialogTitle>
           <DialogDescription>
-            An invitation link will be generated. Share it with the user so they
-            can create their account.
+            {t('inviteDialog.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,11 +112,11 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
             <form.Field name="email">
               {(field) => (
                 <div className="space-y-1.5">
-                  <Label htmlFor="invite-email">Email address</Label>
+                  <Label htmlFor="invite-email">{t('inviteDialog.email')}</Label>
                   <Input
                     id="invite-email"
                     type="email"
-                    placeholder="name@example.com"
+                    placeholder={t('inviteDialog.emailPlaceholder')}
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
@@ -133,13 +134,13 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
             <form.Field name="role">
               {(field) => (
                 <div className="space-y-1.5">
-                  <Label>Role</Label>
+                  <Label>{t('inviteDialog.role')}</Label>
                   <Select
                     value={field.state.value}
                     onValueChange={field.handleChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a role…" />
+                      <SelectValue placeholder={t('inviteDialog.rolePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {SYSTEM_ROLES.map((r) => (
@@ -164,12 +165,12 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
                 variant="outline"
                 onClick={() => handleOpenChange(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <form.Subscribe selector={(s) => s.isSubmitting}>
                 {(isSubmitting) => (
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Sending…' : 'Send invitation'}
+                    {isSubmitting ? t('inviteDialog.submitting') : t('inviteDialog.submit')}
                   </Button>
                 )}
               </form.Subscribe>

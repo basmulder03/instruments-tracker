@@ -1,5 +1,6 @@
 import { useRouter } from '@tanstack/react-router'
 import { LogOut, UserCircle, Sun, Moon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ export function UserMenu() {
   const { currentUser } = useAuth()
   const { isDark, toggle } = useDarkMode()
   const router = useRouter()
+  const { t } = useTranslation()
 
   async function handleSignOut() {
     await signOut()
@@ -50,7 +52,7 @@ export function UserMenu() {
             onClick={() => router.navigate({ to: '/account' })}
           >
             <UserCircle className="mr-2 size-4" />
-            Account settings
+            {t('userMenu.accountSettings')}
           </button>
         </DropdownMenuItem>
 
@@ -64,7 +66,7 @@ export function UserMenu() {
             ) : (
               <Moon className="mr-2 size-4" />
             )}
-            {isDark ? 'Light mode' : 'Dark mode'}
+            {isDark ? t('userMenu.lightMode') : t('userMenu.darkMode')}
           </button>
         </DropdownMenuItem>
 
@@ -76,7 +78,7 @@ export function UserMenu() {
             onClick={handleSignOut}
           >
             <LogOut className="mr-2 size-4" />
-            Sign out
+            {t('userMenu.signOut')}
           </button>
         </DropdownMenuItem>
       </DropdownMenuContent>

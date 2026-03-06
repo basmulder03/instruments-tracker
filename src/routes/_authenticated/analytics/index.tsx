@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RefreshCw, TrendingDown, Activity } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +49,7 @@ function round2(n: number) {
 // ---------------------------------------------------------------------------
 
 function AnalyticsPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [rebuilding, setRebuilding] = useState(false)
   const [rebuildError, setRebuildError] = useState<string | null>(null)
@@ -125,10 +127,9 @@ function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
+          <h1 className="text-2xl font-bold">{t('analytics.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Pre-computed depreciation schedules and usage statistics. Rebuild after adding
-            instruments or usage events.
+            {t('analytics.subtitle')}
           </p>
         </div>
         <Button
@@ -136,19 +137,19 @@ function AnalyticsPage() {
           disabled={rebuilding || instruments.length === 0}
         >
           <RefreshCw className={`mr-2 size-4 ${rebuilding ? 'animate-spin' : ''}`} />
-          {rebuilding ? 'Rebuilding…' : 'Rebuild analytics'}
+          {rebuilding ? t('analytics.rebuilding') : t('analytics.rebuild')}
         </Button>
       </div>
 
       {/* Rebuild feedback */}
       {rebuildSuccess && (
         <div className="rounded-md border border-green-500 bg-green-50 dark:bg-green-950 px-4 py-3 text-sm text-green-700 dark:text-green-300">
-          Analytics rebuilt successfully.
+          {t('analytics.success')}
         </div>
       )}
       {rebuildError && (
         <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          Rebuild failed: {rebuildError}
+          {t('analytics.error', { error: rebuildError })}
         </div>
       )}
 
@@ -158,10 +159,9 @@ function AnalyticsPage() {
           <div className="flex items-center gap-2">
             <TrendingDown className="size-4 text-muted-foreground" />
             <div>
-              <CardTitle className="text-base">Depreciation schedule</CardTitle>
+              <CardTitle className="text-base">{t('analytics.depreciation.title')}</CardTitle>
               <CardDescription>
-                Straight-line depreciation per instrument. Showing current book value (most recent
-                year).
+                {t('analytics.depreciation.description')}
               </CardDescription>
             </div>
           </div>
@@ -171,25 +171,25 @@ function AnalyticsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Instrument</TableHead>
-                  <TableHead className="text-right">Current year</TableHead>
-                  <TableHead className="text-right">Start value</TableHead>
-                  <TableHead className="text-right">Annual dep.</TableHead>
-                  <TableHead className="text-right">End value (book)</TableHead>
-                  <TableHead className="text-right">Years on record</TableHead>
+                  <TableHead>{t('analytics.depreciation.col.instrument')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.depreciation.col.year')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.depreciation.col.startValue')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.depreciation.col.annualDep')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.depreciation.col.endValue')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.depreciation.col.yearsOnRecord')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {depLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      Loading…
+                      {t('common.loading')}
                     </TableCell>
                   </TableRow>
                 ) : depRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      No depreciation data yet. Click <strong>Rebuild analytics</strong> to compute.
+                      {t('analytics.depreciation.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -229,9 +229,9 @@ function AnalyticsPage() {
           <div className="flex items-center gap-2">
             <Activity className="size-4 text-muted-foreground" />
             <div>
-              <CardTitle className="text-base">Usage statistics</CardTitle>
+              <CardTitle className="text-base">{t('analytics.usage.title')}</CardTitle>
               <CardDescription>
-                Aggregated totals derived from logged usage events.
+                {t('analytics.usage.description')}
               </CardDescription>
             </div>
           </div>
@@ -241,24 +241,23 @@ function AnalyticsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Instrument</TableHead>
-                  <TableHead className="text-right">Total units</TableHead>
-                  <TableHead className="text-right">Per day (avg)</TableHead>
-                  <TableHead className="text-right">Per week (avg)</TableHead>
+                  <TableHead>{t('analytics.usage.col.instrument')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.usage.col.totalUnits')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.usage.col.perDay')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.usage.col.perWeek')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {statsLoading ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      Loading…
+                      {t('common.loading')}
                     </TableCell>
                   </TableRow>
                 ) : statsRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                      No usage stats yet. Log usage events and click{' '}
-                      <strong>Rebuild analytics</strong>.
+                      {t('analytics.usage.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (

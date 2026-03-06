@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pencil, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,7 @@ const STATUS_BADGE: Record<string, 'default' | 'secondary' | 'destructive'> = {
 }
 
 function UsersPage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<UserWithId | null>(null)
@@ -60,9 +62,9 @@ function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Users</h1>
+          <h1 className="text-2xl font-bold">{t('users.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage who has access to Instruments Tracker.
+            {t('users.subtitle')}
           </p>
         </div>
         <Can I="invite" a="User">
@@ -75,7 +77,7 @@ function UsersPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search users…"
+          placeholder={t('users.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -86,10 +88,10 @@ function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t('users.col.name')}</TableHead>
+              <TableHead>{t('users.col.email')}</TableHead>
+              <TableHead>{t('users.col.role')}</TableHead>
+              <TableHead>{t('users.col.status')}</TableHead>
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
@@ -99,7 +101,7 @@ function UsersPage() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  {search ? 'No users match your search.' : 'No users found.'}
+                  {search ? t('users.empty.search') : t('users.empty.data')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -122,7 +124,7 @@ function UsersPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setEditing(u)}
-                          aria-label={`Edit ${u.data.displayName}`}
+                          aria-label={t('users.editLabel', { displayName: u.data.displayName })}
                         >
                           <Pencil className="size-4" />
                         </Button>

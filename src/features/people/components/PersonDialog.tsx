@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,13 +23,6 @@ import {
 } from '@/features/people/services/personService'
 import { useAuth } from '@/contexts/AuthContext'
 
-const schema = z.object({
-  naam: z.string().min(1, 'Name is required'),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
-
 interface PersonDialogProps {
   person?: PersonWithId
   open: boolean
@@ -37,9 +31,17 @@ interface PersonDialogProps {
 }
 
 export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!person
+
+  const schema = z.object({
+    naam: z.string().min(1, t('personDialog.validName')),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const form = useForm({
     defaultValues: { naam: person?.data.naam ?? '', notes: person?.data.notes ?? '' } as FormValues,
@@ -53,7 +55,7 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
         } else {
           await createPerson(input, firebaseUser!.uid)
         }
-        toast.success(isEdit ? 'Person updated.' : 'Person added.')
+        toast.success(isEdit ? t('personDialog.toastUpdated') : t('personDialog.toastAdded'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -68,7 +70,9 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit person' : 'Add person'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t('personDialog.titleEdit') : t('personDialog.titleAdd')}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-4">
           {error && <Alert variant="destructive" className="text-sm">{error}</Alert>}
@@ -76,7 +80,7 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
           <form.Field name="naam">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Full name</Label>
+                <Label>{t('personDialog.fullName')}</Label>
                 <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} />
                 {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>}
               </div>
@@ -86,18 +90,24 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
-                <Textarea rows={3} value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder="Contact info, notes…" />
+                <Label>{t('common.notes')}</Label>
+                <Textarea rows={3} value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder={t('personDialog.notesPlaceholder')} />
               </div>
             )}
           </form.Field>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t('common.cancel')}
+            </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add person'}
+                  {submitting
+                    ? t('personDialog.submitting')
+                    : isEdit
+                      ? t('personDialog.submitEdit')
+                      : t('personDialog.submitAdd')}
                 </Button>
               )}
             </form.Subscribe>

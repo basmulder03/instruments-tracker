@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,26 +22,27 @@ export const Route = createFileRoute('/auth/accept-invitation')({
   component: AcceptInvitationPage,
 })
 
-const formSchema = z.object({
-  displayName: z.string().min(2, 'Display name must be at least 2 characters'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
-
 function AcceptInvitationPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { token } = useSearch({ from: '/auth/accept-invitation' })
   const [invitation, setInvitation] = useState<InvitationWithId | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const formSchema = z.object({
+    displayName: z.string().min(2, t('auth.invite.validName')),
+    password: z.string().min(8, t('auth.invite.validPassword')),
+    confirmPassword: z.string(),
+  }).refine((d) => d.password === d.confirmPassword, {
+    message: t('auth.invite.validPasswordMatch'),
+    path: ['confirmPassword'],
+  })
+
   useEffect(() => {
     if (!token) {
-      setLoadError('No invitation token provided. Use the link from your invitation email.')
+      setLoadError(t('auth.invite.errorNoToken'))
       setLoading(false)
       return
     }
@@ -48,18 +50,18 @@ function AcceptInvitationPage() {
     getInvitationByToken(token)
       .then((inv) => {
         if (!inv) {
-          setLoadError('Invitation not found or already used.')
+          setLoadError(t('auth.invite.errorNotFound'))
         } else if (inv.data.status !== 'pending') {
-          setLoadError('This invitation has already been used or has been cancelled.')
+          setLoadError(t('auth.invite.errorUsed'))
         } else if (inv.data.expiresAt.toMillis() < Date.now()) {
-          setLoadError('This invitation has expired. Ask an administrator to send a new one.')
+          setLoadError(t('auth.invite.errorExpired'))
         } else {
           setInvitation(inv)
         }
       })
-      .catch(() => setLoadError('Failed to load invitation. Please try again.'))
+      .catch(() => setLoadError(t('auth.invite.errorLoad')))
       .finally(() => setLoading(false))
-  }, [token])
+  }, [token, t])
 
   const form = useForm({
     defaultValues: { displayName: '', password: '', confirmPassword: '' },
@@ -76,7 +78,7 @@ function AcceptInvitationPage() {
         } else if (err instanceof Error) {
           setSubmitError(err.message)
         } else {
-          setSubmitError('An unexpected error occurred.')
+          setSubmitError(t('auth.invite.errorUnexpected'))
         }
       }
     },
@@ -86,7 +88,7 @@ function AcceptInvitationPage() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">Verifying invitation…</p>
+          <p className="text-center text-muted-foreground">{t('auth.invite.loading')}</p>
         </CardContent>
       </Card>
     )
@@ -96,7 +98,7 @@ function AcceptInvitationPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Invalid invitation</CardTitle>
+          <CardTitle>{t('auth.invite.invalidTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
@@ -110,10 +112,9 @@ function AcceptInvitationPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Accept invitation</CardTitle>
+        <CardTitle className="text-2xl">{t('auth.invite.title')}</CardTitle>
         <CardDescription>
-          You have been invited as <strong>{invitation?.data.role}</strong>. Create a password to
-          activate your account.
+          {t('auth.invite.description', { role: invitation?.data.role })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -123,7 +124,7 @@ function AcceptInvitationPage() {
           </Alert>
         )}
         <p className="text-sm text-muted-foreground mb-4">
-          Account email: <strong>{invitation?.data.email}</strong>
+          {t('auth.invite.accountEmail', { email: invitation?.data.email })}
         </p>
         <form
           onSubmit={(e) => {
@@ -135,10 +136,10 @@ function AcceptInvitationPage() {
           <form.Field name="displayName">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="displayName">Full name</Label>
+                <Label htmlFor="displayName">{t('auth.invite.fullName')}</Label>
                 <Input
                   id="displayName"
-                  placeholder="Jane Doe"
+                  placeholder={t('auth.invite.namePlaceholder')}
                   autoComplete="name"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -154,7 +155,7 @@ function AcceptInvitationPage() {
           <form.Field name="password">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.invite.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -173,7 +174,7 @@ function AcceptInvitationPage() {
           <form.Field name="confirmPassword">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.invite.confirmPassword')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -192,7 +193,7 @@ function AcceptInvitationPage() {
           <form.Subscribe selector={(s) => s.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Activating account…' : 'Activate account'}
+                {isSubmitting ? t('auth.invite.submitting') : t('auth.invite.submit')}
               </Button>
             )}
           </form.Subscribe>

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,26 +35,7 @@ import {
 } from '@/features/operations/services/maintenanceService'
 import { useAuth } from '@/contexts/AuthContext'
 
-const CATEGORIES = [
-  { value: 'PADS', label: 'Pads' },
-  { value: 'OVERHAUL', label: 'Overhaul' },
-  { value: 'ADJUSTMENT', label: 'Adjustment' },
-  { value: 'CLEANING', label: 'Cleaning' },
-  { value: 'REPAIR_OTHER', label: 'Repair / Other' },
-] as const
-
-type Category = typeof CATEGORIES[number]['value']
-
-const schema = z.object({
-  instrumentId: z.string().min(1),
-  category: z.enum(['PADS', 'OVERHAUL', 'ADJUSTMENT', 'CLEANING', 'REPAIR_OTHER']),
-  cost: z.coerce.number().min(0, 'Must be ≥ 0'),
-  isMajor: z.boolean(),
-  performedAt: z.string().min(1, 'Date is required'),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
+type Category = 'PADS' | 'OVERHAUL' | 'ADJUSTMENT' | 'CLEANING' | 'REPAIR_OTHER'
 
 interface MaintenanceDialogProps {
   instrumentId: string
@@ -76,9 +58,29 @@ export function MaintenanceDialog({
   onOpenChange,
   onSaved,
 }: MaintenanceDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser, currentUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!record
+
+  const CATEGORIES: { value: Category; label: string }[] = [
+    { value: 'PADS', label: t('maintenanceDialog.cat.pads') },
+    { value: 'OVERHAUL', label: t('maintenanceDialog.cat.overhaul') },
+    { value: 'ADJUSTMENT', label: t('maintenanceDialog.cat.adjustment') },
+    { value: 'CLEANING', label: t('maintenanceDialog.cat.cleaning') },
+    { value: 'REPAIR_OTHER', label: t('maintenanceDialog.cat.repair') },
+  ]
+
+  const schema = z.object({
+    instrumentId: z.string().min(1),
+    category: z.enum(['PADS', 'OVERHAUL', 'ADJUSTMENT', 'CLEANING', 'REPAIR_OTHER']),
+    cost: z.coerce.number().min(0, t('maintenanceDialog.validCost')),
+    isMajor: z.boolean(),
+    performedAt: z.string().min(1, t('maintenanceDialog.validDate')),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const form = useForm<FormValues>({
     defaultValues: record
@@ -103,7 +105,7 @@ export function MaintenanceDialog({
         } else {
           await createMaintenance(input, uid, email)
         }
-        toast.success(isEdit ? 'Maintenance record updated.' : 'Maintenance logged.')
+        toast.success(isEdit ? t('maintenanceDialog.toastUpdated') : t('maintenanceDialog.toastCreated'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -119,7 +121,9 @@ export function MaintenanceDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? 'Edit maintenance' : 'Log maintenance'} — {instrumentName}
+            {isEdit
+              ? t('maintenanceDialog.titleEdit', { instrumentName })
+              : t('maintenanceDialog.titleCreate', { instrumentName })}
           </DialogTitle>
         </DialogHeader>
 
@@ -133,7 +137,7 @@ export function MaintenanceDialog({
           <form.Field name="category">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Category</Label>
+                <Label>{t('maintenanceDialog.category')}</Label>
                 <Select
                   value={f.state.value}
                   onValueChange={(v) => f.handleChange(v as Category)}
@@ -158,7 +162,7 @@ export function MaintenanceDialog({
             <form.Field name="cost">
               {(f) => (
                 <div className="space-y-1.5">
-                  <Label>Cost (€)</Label>
+                  <Label>{t('maintenanceDialog.cost')}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -178,7 +182,7 @@ export function MaintenanceDialog({
             <form.Field name="performedAt">
               {(f) => (
                 <div className="space-y-1.5">
-                  <Label>Performed on</Label>
+                  <Label>{t('maintenanceDialog.performedOn')}</Label>
                   <Input
                     type="date"
                     value={f.state.value}
@@ -203,7 +207,7 @@ export function MaintenanceDialog({
                   onCheckedChange={(checked) => f.handleChange(!!checked)}
                 />
                 <Label htmlFor="isMajor" className="cursor-pointer">
-                  Major maintenance
+                  {t('maintenanceDialog.majorLabel')}
                 </Label>
               </div>
             )}
@@ -213,7 +217,7 @@ export function MaintenanceDialog({
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
+                <Label>{t('maintenanceDialog.notesLabel')}</Label>
                 <Textarea
                   rows={3}
                   value={f.state.value}
@@ -226,12 +230,16 @@ export function MaintenanceDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Log maintenance'}
+                  {submitting
+                    ? t('maintenanceDialog.submitting')
+                    : isEdit
+                      ? t('maintenanceDialog.submitEdit')
+                      : t('maintenanceDialog.submitCreate')}
                 </Button>
               )}
             </form.Subscribe>

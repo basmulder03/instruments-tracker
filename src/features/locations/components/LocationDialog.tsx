@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,14 +23,6 @@ import {
 } from '@/features/locations/services/locationService'
 import { useAuth } from '@/contexts/AuthContext'
 
-const schema = z.object({
-  naam: z.string().min(1, 'Name is required'),
-  adres: z.string(),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
-
 interface LocationDialogProps {
   location?: LocationWithId
   open: boolean
@@ -38,9 +31,18 @@ interface LocationDialogProps {
 }
 
 export function LocationDialog({ location, open, onOpenChange, onSaved }: LocationDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!location
+
+  const schema = z.object({
+    naam: z.string().min(1, t('locationDialog.validName')),
+    adres: z.string(),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const form = useForm({
     defaultValues: {
@@ -58,7 +60,7 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
         } else {
           await createLocation(input, firebaseUser!.uid)
         }
-        toast.success(isEdit ? 'Location updated.' : 'Location added.')
+        toast.success(isEdit ? t('locationDialog.toastUpdated') : t('locationDialog.toastAdded'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -73,7 +75,9 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit location' : 'Add location'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t('locationDialog.titleEdit') : t('locationDialog.titleAdd')}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-4">
           {error && <Alert variant="destructive" className="text-sm">{error}</Alert>}
@@ -81,8 +85,8 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
           <form.Field name="naam">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Name</Label>
-                <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder="e.g. Main Storage Room" />
+                <Label>{t('locationDialog.name')}</Label>
+                <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder={t('locationDialog.namePlaceholder')} />
                 {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>}
               </div>
             )}
@@ -91,8 +95,8 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
           <form.Field name="adres">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Address</Label>
-                <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder="Building A, Room 101" />
+                <Label>{t('locationDialog.address')}</Label>
+                <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder={t('locationDialog.addressPlaceholder')} />
               </div>
             )}
           </form.Field>
@@ -100,18 +104,24 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
+                <Label>{t('locationDialog.notesLabel')}</Label>
                 <Textarea rows={3} value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} />
               </div>
             )}
           </form.Field>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t('common.cancel')}
+            </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add location'}
+                  {submitting
+                    ? t('locationDialog.submitting')
+                    : isEdit
+                      ? t('locationDialog.submitEdit')
+                      : t('locationDialog.submitAdd')}
                 </Button>
               )}
             </form.Subscribe>

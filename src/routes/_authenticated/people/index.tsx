@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -29,6 +30,7 @@ export const Route = createFileRoute('/_authenticated/people/')({
 })
 
 function PeoplePage() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -54,9 +56,9 @@ function PeoplePage() {
     if (!deleting) return
     try {
       await deletePerson(deleting.id)
-      toast.success(`"${deleting.data.naam}" deleted.`)
+      toast.success(t('people.toast.deleted', { name: deleting.data.naam }))
     } catch {
-      toast.error('Failed to delete person.')
+      toast.error(t('people.toast.deleteError'))
     }
     setDeleting(null)
     invalidate()
@@ -66,15 +68,15 @@ function PeoplePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">People</h1>
+          <h1 className="text-2xl font-bold">{t('people.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            People who can borrow instruments.
+            {t('people.subtitle')}
           </p>
         </div>
         <Can I="create" a="Person">
           <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
             <Plus className="mr-2 size-4" />
-            Add person
+            {t('people.addButton')}
           </Button>
         </Can>
       </div>
@@ -83,7 +85,7 @@ function PeoplePage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search people…"
+          placeholder={t('people.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -93,9 +95,9 @@ function PeoplePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead>{t('common.id')}</TableHead>
+              <TableHead>{t('common.name')}</TableHead>
+              <TableHead>{t('common.notes')}</TableHead>
               <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
@@ -105,7 +107,7 @@ function PeoplePage() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                  {search ? 'No people match your search.' : 'No people yet.'}
+                  {search ? t('people.empty.search') : t('people.empty.data')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -146,8 +148,8 @@ function PeoplePage() {
       <DeleteConfirmDialog
         open={!!deleting}
         onOpenChange={(open) => { if (!open) setDeleting(null) }}
-        title={`Delete "${deleting?.data.naam}"?`}
-        description="This will permanently remove this person."
+        title={t('people.deleteTitle', { name: deleting?.data.naam })}
+        description={t('people.deleteDescription')}
         onConfirm={handleDelete}
       />
     </div>

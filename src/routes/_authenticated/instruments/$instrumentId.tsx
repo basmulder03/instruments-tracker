@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, LogIn, LogOut, Wrench, Activity } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getInstrumentTimeline } from '@/features/history/services/historyService'
@@ -16,13 +17,6 @@ const KIND_ICON = {
   return: LogIn,
   maintenance: Wrench,
   usage: Activity,
-}
-
-const KIND_LABEL = {
-  checkout: 'Checked out',
-  return: 'Returned',
-  maintenance: 'Maintenance',
-  usage: 'Usage logged',
 }
 
 const KIND_COLOR: Record<string, string> = {
@@ -41,6 +35,7 @@ function fmtDate(iso: string) {
 }
 
 function InstrumentHistoryPage() {
+  const { t } = useTranslation()
   const { instrumentId } = Route.useParams()
 
   const { data: instruments = [] } = useQuery({
@@ -56,12 +51,19 @@ function InstrumentHistoryPage() {
     enabled: !!instrumentId,
   })
 
+  const KIND_LABEL: Record<string, string> = {
+    checkout: t('instrumentHistory.kind.checkout'),
+    return: t('instrumentHistory.kind.return'),
+    maintenance: t('instrumentHistory.kind.maintenance'),
+    usage: t('instrumentHistory.kind.usage'),
+  }
+
   const MAINT_CATEGORY: Record<string, string> = {
-    PADS: 'Pads',
-    OVERHAUL: 'Overhaul',
-    ADJUSTMENT: 'Adjustment',
-    CLEANING: 'Cleaning',
-    REPAIR_OTHER: 'Repair / Other',
+    PADS: t('maintenance.cat.pads'),
+    OVERHAUL: t('maintenance.cat.overhaul'),
+    ADJUSTMENT: t('maintenance.cat.adjustment'),
+    CLEANING: t('maintenance.cat.cleaning'),
+    REPAIR_OTHER: t('maintenance.cat.repair'),
   }
 
   return (
@@ -79,7 +81,11 @@ function InstrumentHistoryPage() {
           </h1>
           {instrument && (
             <p className="text-sm text-muted-foreground mt-0.5">
-              {instrument.data.type} · {instrument.data.merk} · {instrumentId}
+              {t('instrumentHistory.subtitle', {
+                type: instrument.data.type,
+                brand: instrument.data.merk,
+                id: instrumentId,
+              })}
             </p>
           )}
         </div>
@@ -87,16 +93,16 @@ function InstrumentHistoryPage() {
 
       {/* Timeline */}
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold">History</h2>
+        <h2 className="text-lg font-semibold">{t('instrumentHistory.historyTitle')}</h2>
         <p className="text-sm text-muted-foreground">
-          All movements, maintenance, and usage events — newest first.
+          {t('instrumentHistory.historySubtitle')}
         </p>
       </div>
 
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <p className="text-muted-foreground text-sm">{t('common.loading')}</p>
       ) : timeline.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No history recorded yet.</p>
+        <p className="text-muted-foreground text-sm">{t('instrumentHistory.empty')}</p>
       ) : (
         <ol className="relative ml-3 border-l border-border space-y-6">
           {timeline.map((event) => {
@@ -125,12 +131,12 @@ function InstrumentHistoryPage() {
                   {/* Movement details */}
                   {(event.kind === 'checkout' || event.kind === 'return') && event.movement && (
                     <div className="text-sm text-muted-foreground space-y-0.5">
-                      <p>Movement: <span className="font-mono text-xs">{event.movement.id}</span></p>
+                      <p>{t('instrumentHistory.movement', { id: event.movement.id })}</p>
                       {event.kind === 'checkout' && (
-                        <p>Person ID: <span className="font-mono text-xs">{event.movement.data.checkoutPersonId}</span></p>
+                        <p>{t('instrumentHistory.person', { id: event.movement.data.checkoutPersonId })}</p>
                       )}
                       {event.movement.data.notes && (
-                        <p>Notes: {event.movement.data.notes}</p>
+                        <p>{t('instrumentHistory.notes', { text: event.movement.data.notes })}</p>
                       )}
                       <Badge
                         variant={event.movement.data.status === 'OPEN' ? 'default' : 'secondary'}
@@ -145,14 +151,14 @@ function InstrumentHistoryPage() {
                   {event.kind === 'maintenance' && event.maintenance && (
                     <div className="text-sm text-muted-foreground space-y-0.5">
                       <p>
-                        Category: {MAINT_CATEGORY[event.maintenance.data.category] ?? event.maintenance.data.category}
+                        {t('instrumentHistory.category', { cat: MAINT_CATEGORY[event.maintenance.data.category] ?? event.maintenance.data.category })}
                         {event.maintenance.data.isMajor && (
-                          <Badge variant="destructive" className="ml-2 text-xs">Major</Badge>
+                          <Badge variant="destructive" className="ml-2 text-xs">{t('instrumentHistory.major')}</Badge>
                         )}
                       </p>
-                      <p>Cost: €{event.maintenance.data.cost.toFixed(2)}</p>
+                      <p>{t('instrumentHistory.cost', { amount: event.maintenance.data.cost.toFixed(2) })}</p>
                       {event.maintenance.data.notes && (
-                        <p>Notes: {event.maintenance.data.notes}</p>
+                        <p>{t('instrumentHistory.notes', { text: event.maintenance.data.notes })}</p>
                       )}
                     </div>
                   )}
@@ -161,10 +167,10 @@ function InstrumentHistoryPage() {
                   {event.kind === 'usage' && event.usage && (
                     <div className="text-sm text-muted-foreground space-y-0.5">
                       <p>
-                        {event.usage.data.units} {event.usage.data.unitType}
+                        {t('instrumentHistory.usage', { units: event.usage.data.units, unitType: event.usage.data.unitType })}
                       </p>
                       {event.usage.data.notes && (
-                        <p>Notes: {event.usage.data.notes}</p>
+                        <p>{t('instrumentHistory.notes', { text: event.usage.data.notes })}</p>
                       )}
                     </div>
                   )}

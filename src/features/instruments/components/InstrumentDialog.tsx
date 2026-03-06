@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -29,24 +30,20 @@ import {
 } from '@/features/instruments/services/instrumentService'
 import { useAuth } from '@/contexts/AuthContext'
 
-const schema = z.object({
-  naam: z.string().min(1, 'Name is required'),
-  type: z.string().min(1, 'Type is required'),
-  merk: z.string().min(1, 'Brand is required'),
-  serienummer: z.string(),
-  purchaseDate: z.string().min(1, 'Purchase date is required'),
-  purchaseCost: z.coerce.number().min(0, 'Must be ≥ 0'),
-  usefulLifeYears: z.coerce.number().int().min(1, 'Must be ≥ 1'),
-  salvageValue: z.coerce.number().min(0, 'Must be ≥ 0'),
-  // CHECKED_OUT is intentionally excluded: status must only change via
-  // the Check Out / Return operations so that a Movement record is always created.
-  currentStatus: z.enum(['IN_STORAGE', 'CHECKED_OUT', 'IN_REPAIR']),
-  currentLocationId: z.string(),
-  currentPersonId: z.string(),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
+type FormValues = {
+  naam: string
+  type: string
+  merk: string
+  serienummer: string
+  purchaseDate: string
+  purchaseCost: number
+  usefulLifeYears: number
+  salvageValue: number
+  currentStatus: 'IN_STORAGE' | 'CHECKED_OUT' | 'IN_REPAIR'
+  currentLocationId: string
+  currentPersonId: string
+  notes: string
+}
 
 interface InstrumentDialogProps {
   instrument?: InstrumentWithId
@@ -76,9 +73,26 @@ export function InstrumentDialog({
   onOpenChange,
   onSaved,
 }: InstrumentDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!instrument
+
+  // Schema defined inside component so t() is ready
+  const schema = z.object({
+    naam: z.string().min(1, t('instrumentDialog.validName')),
+    type: z.string().min(1, t('instrumentDialog.validType')),
+    merk: z.string().min(1, t('instrumentDialog.validBrand')),
+    serienummer: z.string(),
+    purchaseDate: z.string().min(1, t('instrumentDialog.validDate')),
+    purchaseCost: z.coerce.number().min(0, t('instrumentDialog.validMin0')),
+    usefulLifeYears: z.coerce.number().int().min(1, t('instrumentDialog.validMin1')),
+    salvageValue: z.coerce.number().min(0, t('instrumentDialog.validMin0')),
+    currentStatus: z.enum(['IN_STORAGE', 'CHECKED_OUT', 'IN_REPAIR']),
+    currentLocationId: z.string(),
+    currentPersonId: z.string(),
+    notes: z.string(),
+  })
 
   const form = useForm({
     defaultValues: instrument
@@ -99,7 +113,7 @@ export function InstrumentDialog({
         } else {
           await createInstrument(input, firebaseUser!.uid)
         }
-        toast.success(isEdit ? 'Instrument updated.' : 'Instrument added.')
+        toast.success(isEdit ? t('instrumentDialog.toastUpdated') : t('instrumentDialog.toastAdded'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -144,7 +158,9 @@ export function InstrumentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit instrument' : 'Add instrument'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t('instrumentDialog.titleEdit') : t('instrumentDialog.titleAdd')}
+          </DialogTitle>
         </DialogHeader>
 
         <form
@@ -154,28 +170,28 @@ export function InstrumentDialog({
           {error && <Alert variant="destructive" className="text-sm">{error}</Alert>}
 
           <div className="grid grid-cols-2 gap-4">
-            {field('naam', 'Name', (v, onChange, onBlur) => (
-              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder="e.g. Yamaha Trumpet YTR-2330" />
+            {field('naam', t('instrumentDialog.name'), (v, onChange, onBlur) => (
+              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.namePlaceholder')} />
             ))}
-            {field('type', 'Type', (v, onChange, onBlur) => (
-              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder="e.g. Trumpet" />
+            {field('type', t('instrumentDialog.type'), (v, onChange, onBlur) => (
+              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.typePlaceholder')} />
             ))}
-            {field('merk', 'Brand', (v, onChange, onBlur) => (
-              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder="e.g. Yamaha" />
+            {field('merk', t('instrumentDialog.brand'), (v, onChange, onBlur) => (
+              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.brandPlaceholder')} />
             ))}
-            {field('serienummer', 'Serial number', (v, onChange, onBlur) => (
+            {field('serienummer', t('instrumentDialog.serial'), (v, onChange, onBlur) => (
               <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
             ))}
-            {field('purchaseDate', 'Purchase date', (v, onChange, onBlur) => (
+            {field('purchaseDate', t('instrumentDialog.purchaseDate'), (v, onChange, onBlur) => (
               <Input type="date" value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
             ))}
-            {field('purchaseCost', 'Purchase cost (€)', (v, onChange, onBlur) => (
+            {field('purchaseCost', t('instrumentDialog.purchaseCost'), (v, onChange, onBlur) => (
               <Input type="number" min={0} step={0.01} value={v as number} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
             ))}
-            {field('usefulLifeYears', 'Useful life (years)', (v, onChange, onBlur) => (
+            {field('usefulLifeYears', t('instrumentDialog.usefulLife'), (v, onChange, onBlur) => (
               <Input type="number" min={1} step={1} value={v as number} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
             ))}
-            {field('salvageValue', 'Salvage value (€)', (v, onChange, onBlur) => (
+            {field('salvageValue', t('instrumentDialog.salvageValue'), (v, onChange, onBlur) => (
               <Input type="number" min={0} step={0.01} value={v as number} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
             ))}
           </div>
@@ -183,22 +199,22 @@ export function InstrumentDialog({
           <form.Field name="currentStatus">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Status</Label>
+                <Label>{t('instrumentDialog.status')}</Label>
                 {/* New instruments always start IN_STORAGE — status changes via
                     Check Out / Return operations only, to keep Movement records
                     in sync. When editing a checked-out instrument the field is
                     read-only to prevent a limbo state. */}
                 {!isEdit ? (
                   <p className="text-sm text-muted-foreground border rounded-md px-3 py-2 bg-muted">
-                    In storage
+                    {t('instrumentDialog.statusInStorage')}
                   </p>
                 ) : f.state.value === 'CHECKED_OUT' ? (
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground border rounded-md px-3 py-2 bg-muted">
-                      Checked out
+                      {t('instrumentDialog.statusCheckedOut')}
                     </p>
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Status is managed by Check Out / Return operations and cannot be changed here.
+                      {t('instrumentDialog.statusHint')}
                     </p>
                   </div>
                 ) : (
@@ -208,8 +224,8 @@ export function InstrumentDialog({
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="IN_STORAGE">In storage</SelectItem>
-                      <SelectItem value="IN_REPAIR">In repair</SelectItem>
+                      <SelectItem value="IN_STORAGE">{t('instrumentDialog.statusInStorage')}</SelectItem>
+                      <SelectItem value="IN_REPAIR">{t('instrumentDialog.statusInRepair')}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -217,16 +233,22 @@ export function InstrumentDialog({
             )}
           </form.Field>
 
-          {field('notes', 'Notes', (v, onChange, onBlur) => (
+          {field('notes', t('instrumentDialog.notesLabel'), (v, onChange, onBlur) => (
             <Textarea rows={3} value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
           ))}
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t('common.cancel')}
+            </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Add instrument'}
+                  {submitting
+                    ? t('instrumentDialog.submitting')
+                    : isEdit
+                      ? t('instrumentDialog.submitEdit')
+                      : t('instrumentDialog.submitAdd')}
                 </Button>
               )}
             </form.Subscribe>

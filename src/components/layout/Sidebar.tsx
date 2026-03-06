@@ -11,6 +11,7 @@ import {
   ClipboardList,
   UserCog,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAbility } from '@/contexts/AbilityContext'
 import type { Actions, Subjects } from '@/lib/types/permissions'
@@ -20,7 +21,7 @@ import type { Actions, Subjects } from '@/lib/types/permissions'
 // ---------------------------------------------------------------------------
 
 interface NavItem {
-  label: string
+  labelKey: string
   to: string
   icon: React.ElementType
   /** CASL check — item only shown when ability.can(action, subject) */
@@ -29,60 +30,60 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Dashboard',
+    labelKey: 'nav.dashboard',
     to: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    label: 'Instruments',
+    labelKey: 'nav.instruments',
     to: '/instruments',
     icon: Music,
     permission: { action: 'read', subject: 'Instrument' },
   },
   {
-    label: 'People',
+    labelKey: 'nav.people',
     to: '/people',
     icon: Users,
     permission: { action: 'read', subject: 'Person' },
   },
   {
-    label: 'Locations',
+    labelKey: 'nav.locations',
     to: '/locations',
     icon: MapPin,
     permission: { action: 'read', subject: 'Location' },
   },
   {
-    label: 'Movements',
+    labelKey: 'nav.movements',
     to: '/movements',
     icon: ArrowRightLeft,
     permission: { action: 'read', subject: 'Movement' },
   },
   {
-    label: 'Maintenance',
+    labelKey: 'nav.maintenance',
     to: '/maintenance',
     icon: Wrench,
     permission: { action: 'read', subject: 'Maintenance' },
   },
   {
-    label: 'Analytics',
+    labelKey: 'nav.analytics',
     to: '/analytics',
     icon: BarChart3,
     permission: { action: 'view', subject: 'Analytics' },
   },
   {
-    label: 'Audit Log',
+    labelKey: 'nav.auditLog',
     to: '/audit',
     icon: ClipboardList,
     permission: { action: 'read', subject: 'Audit' },
   },
   {
-    label: 'Users',
+    labelKey: 'nav.users',
     to: '/admin/users',
     icon: UserCog,
     permission: { action: 'read', subject: 'User' },
   },
   {
-    label: 'Roles',
+    labelKey: 'nav.roles',
     to: '/admin/roles',
     icon: ShieldCheck,
     permission: { action: 'read', subject: 'Role' },
@@ -94,6 +95,7 @@ const NAV_ITEMS: NavItem[] = [
 // ---------------------------------------------------------------------------
 
 function NavLink({ item }: { item: NavItem }) {
+  const { t } = useTranslation()
   const routerState = useRouterState()
   const pathname = routerState.location.pathname
   const isActive = pathname === item.to || pathname.startsWith(item.to + '/')
@@ -110,7 +112,7 @@ function NavLink({ item }: { item: NavItem }) {
       )}
     >
       <Icon className="size-4 shrink-0" />
-      <span>{item.label}</span>
+      <span>{t(item.labelKey)}</span>
     </Link>
   )
 }
@@ -124,6 +126,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className }: SidebarProps) {
+  const { t } = useTranslation()
   const ability = useAbility()
 
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -141,7 +144,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Logo / brand */}
       <div className="flex h-14 items-center border-b px-4">
         <span className="text-lg font-semibold tracking-tight">
-          Instruments Tracker
+          {t('appName')}
         </span>
       </div>
 

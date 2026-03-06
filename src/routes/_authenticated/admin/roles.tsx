@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search } from 'lucide-react'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
 import { db } from '@/config/firebase'
@@ -35,6 +36,7 @@ async function listRoles(): Promise<RoleWithId[]> {
 }
 
 function RolesPage() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
 
   const { data: roles = [], isLoading } = useQuery({
@@ -55,9 +57,9 @@ function RolesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Roles</h1>
+        <h1 className="text-2xl font-bold">{t('roles.title')}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          System roles and their permission sets.
+          {t('roles.subtitle')}
         </p>
       </div>
 
@@ -65,7 +67,7 @@ function RolesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Search roles…"
+          placeholder={t('roles.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -75,10 +77,10 @@ function RolesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Role</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Permissions</TableHead>
-              <TableHead>Type</TableHead>
+              <TableHead>{t('roles.col.role')}</TableHead>
+              <TableHead>{t('roles.col.description')}</TableHead>
+              <TableHead>{t('roles.col.permissions')}</TableHead>
+              <TableHead>{t('roles.col.type')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,7 +89,7 @@ function RolesPage() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                  {search ? 'No roles match your search.' : 'No roles found. Make sure system data has been seeded.'}
+                  {search ? t('roles.empty.search') : t('roles.empty.data')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -100,15 +102,15 @@ function RolesPage() {
                   <TableCell>
                     <Badge variant="secondary">
                       {r.data.permissions.includes('*:*')
-                        ? 'all'
-                        : `${r.data.permissions.length} permissions`}
+                        ? t('roles.badge.allPermissions')
+                        : t('roles.badge.permCount', { n: r.data.permissions.length })}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {r.data.isSystem ? (
-                      <Badge variant="outline">System</Badge>
+                      <Badge variant="outline">{t('roles.badge.system')}</Badge>
                     ) : (
-                      <Badge>Custom</Badge>
+                      <Badge>{t('roles.badge.custom')}</Badge>
                     )}
                   </TableCell>
                 </TableRow>

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,16 +14,17 @@ export const Route = createFileRoute('/auth/login')({
   component: LoginPage,
 })
 
-const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-})
-
 function LoginPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+
+  const loginSchema = z.object({
+    email: z.string().email(t('auth.login.validEmail')),
+    password: z.string().min(1, t('auth.login.validPassword')),
+  })
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
@@ -36,18 +38,17 @@ function LoginPage() {
         if (err instanceof z.ZodError) {
           setError(err.errors[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
-          // Firebase error codes
           if (
             err.message.includes('user-not-found') ||
             err.message.includes('wrong-password') ||
             err.message.includes('invalid-credential')
           ) {
-            setError('Invalid email or password.')
+            setError(t('auth.login.errorInvalid'))
           } else {
             setError(err.message)
           }
         } else {
-          setError('An unexpected error occurred.')
+          setError(t('auth.login.errorUnexpected'))
         }
       }
     },
@@ -56,7 +57,7 @@ function LoginPage() {
   async function handleResetPassword() {
     const email = form.getFieldValue('email')
     if (!email) {
-      setError('Enter your email address above to receive a reset link.')
+      setError(t('auth.login.resetGuard'))
       return
     }
     setIsResetting(true)
@@ -65,7 +66,7 @@ function LoginPage() {
       await resetPassword(email)
       setResetSent(true)
     } catch {
-      setError('Could not send reset email. Make sure the email address is correct.')
+      setError(t('auth.login.resetError'))
     } finally {
       setIsResetting(false)
     }
@@ -74,8 +75,8 @@ function LoginPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Sign in</CardTitle>
-        <CardDescription>Enter your credentials to access Instruments Tracker</CardDescription>
+        <CardTitle className="text-2xl">{t('auth.login.title')}</CardTitle>
+        <CardDescription>{t('auth.login.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -85,9 +86,7 @@ function LoginPage() {
         )}
         {resetSent && (
           <Alert className="mb-4">
-            <AlertDescription>
-              Password reset email sent. Check your inbox.
-            </AlertDescription>
+            <AlertDescription>{t('auth.login.resetSuccess')}</AlertDescription>
           </Alert>
         )}
         <form
@@ -100,11 +99,11 @@ function LoginPage() {
           <form.Field name="email">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.login.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
+                  placeholder={t('auth.login.emailPlaceholder')}
                   autoComplete="email"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -120,7 +119,7 @@ function LoginPage() {
           <form.Field name="password">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.login.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -139,7 +138,7 @@ function LoginPage() {
           <form.Subscribe selector={(s) => s.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Signing in…' : 'Sign in'}
+                {isSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
               </Button>
             )}
           </form.Subscribe>
@@ -152,13 +151,13 @@ function LoginPage() {
             disabled={isResetting}
             className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
           >
-            {isResetting ? 'Sending…' : 'Forgot password?'}
+            {isResetting ? t('auth.login.sendingReset') : t('auth.login.forgotPassword')}
           </button>
           <Link
             to="/auth/register"
             className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
           >
-            No account yet? Register as first administrator
+            {t('auth.login.noAccount')}
           </Link>
         </div>
       </CardContent>

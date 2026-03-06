@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,16 +26,6 @@ import {
   type UsageEventWithId,
 } from '@/features/operations/services/usageEventService'
 import { useAuth } from '@/contexts/AuthContext'
-
-const schema = z.object({
-  instrumentId: z.string().min(1),
-  units: z.coerce.number().min(0.01, 'Must be > 0'),
-  unitType: z.string().min(1, 'Unit type is required'),
-  sessionAt: z.string().min(1, 'Date/time is required'),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
 
 interface UsageEventDialogProps {
   instrumentId: string
@@ -59,9 +50,20 @@ export function UsageEventDialog({
   onOpenChange,
   onSaved,
 }: UsageEventDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser, currentUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!record
+
+  const schema = z.object({
+    instrumentId: z.string().min(1),
+    units: z.coerce.number().min(0.01, t('usageDialog.validUnits')),
+    unitType: z.string().min(1, t('usageDialog.validUnitType')),
+    sessionAt: z.string().min(1, t('usageDialog.validDate')),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const form = useForm<FormValues>({
     defaultValues: record
@@ -85,7 +87,7 @@ export function UsageEventDialog({
         } else {
           await createUsageEvent(input, uid, email)
         }
-        toast.success(isEdit ? 'Usage updated.' : 'Usage logged.')
+        toast.success(isEdit ? t('usageDialog.toastUpdated') : t('usageDialog.toastCreated'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -101,7 +103,9 @@ export function UsageEventDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? 'Edit usage log' : 'Log usage'} — {instrumentName}
+            {isEdit
+              ? t('usageDialog.titleEdit', { instrumentName })
+              : t('usageDialog.titleCreate', { instrumentName })}
           </DialogTitle>
         </DialogHeader>
 
@@ -116,7 +120,7 @@ export function UsageEventDialog({
             <form.Field name="units">
               {(f) => (
                 <div className="space-y-1.5">
-                  <Label>Units</Label>
+                  <Label>{t('usageDialog.units')}</Label>
                   <Input
                     type="number"
                     min={0.01}
@@ -136,12 +140,12 @@ export function UsageEventDialog({
             <form.Field name="unitType">
               {(f) => (
                 <div className="space-y-1.5">
-                  <Label>Unit type</Label>
+                  <Label>{t('usageDialog.unitType')}</Label>
                   <Input
                     value={f.state.value}
                     onChange={(e) => f.handleChange(e.target.value)}
                     onBlur={f.handleBlur}
-                    placeholder="e.g. hours, sessions"
+                    placeholder={t('usageDialog.unitTypePlaceholder')}
                   />
                   {f.state.meta.errors.length > 0 && (
                     <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
@@ -155,7 +159,7 @@ export function UsageEventDialog({
           <form.Field name="sessionAt">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Session date &amp; time</Label>
+                <Label>{t('usageDialog.dateTime')}</Label>
                 <Input
                   type="datetime-local"
                   value={f.state.value}
@@ -173,7 +177,7 @@ export function UsageEventDialog({
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
+                <Label>{t('usageDialog.notesLabel')}</Label>
                 <Textarea
                   rows={2}
                   value={f.state.value}
@@ -186,12 +190,16 @@ export function UsageEventDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Saving…' : isEdit ? 'Save changes' : 'Log usage'}
+                  {submitting
+                    ? t('usageDialog.submitting')
+                    : isEdit
+                      ? t('usageDialog.submitEdit')
+                      : t('usageDialog.submitCreate')}
                 </Button>
               )}
             </form.Subscribe>

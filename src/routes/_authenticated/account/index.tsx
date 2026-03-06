@@ -6,6 +6,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { changePassword } from '@/features/users/services/authService'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import i18n from '@/i18n'
 
 export const Route = createFileRoute('/_authenticated/account/')({
   component: AccountSettingsPage,
@@ -29,14 +31,15 @@ export const Route = createFileRoute('/_authenticated/account/')({
 // Profile section
 // ---------------------------------------------------------------------------
 
-const profileSchema = z.object({
-  displayName: z.string().min(2, 'Display name must be at least 2 characters'),
-})
-
 function ProfileSection() {
+  const { t } = useTranslation()
   const { currentUser, firebaseUser } = useAuth()
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const profileSchema = z.object({
+    displayName: z.string().min(2, t('account.profile.validName')),
+  })
 
   const form = useForm({
     defaultValues: { displayName: currentUser?.displayName ?? '' },
@@ -64,13 +67,13 @@ function ProfileSection() {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm text-muted-foreground">Email</p>
+        <p className="text-sm text-muted-foreground">{t('account.profile.email')}</p>
         <p className="font-medium">{currentUser?.email}</p>
       </div>
       <Separator />
       {success && (
         <Alert className="mb-2">
-          <AlertDescription>Profile updated successfully.</AlertDescription>
+          <AlertDescription>{t('account.profile.success')}</AlertDescription>
         </Alert>
       )}
       {error && (
@@ -85,7 +88,7 @@ function ProfileSection() {
         <form.Field name="displayName">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display name</Label>
+              <Label htmlFor="displayName">{t('account.profile.displayName')}</Label>
               <Input
                 id="displayName"
                 value={field.state.value}
@@ -101,7 +104,7 @@ function ProfileSection() {
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving…' : 'Save changes'}
+              {isSubmitting ? t('account.profile.saving') : t('account.profile.save')}
             </Button>
           )}
         </form.Subscribe>
@@ -114,17 +117,18 @@ function ProfileSection() {
 // Password section
 // ---------------------------------------------------------------------------
 
-const passwordSchema = z.object({
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-}).refine((d) => d.newPassword === d.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
-
 function PasswordSection() {
+  const { t } = useTranslation()
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const passwordSchema = z.object({
+    newPassword: z.string().min(8, t('account.password.validPassword')),
+    confirmPassword: z.string(),
+  }).refine((d) => d.newPassword === d.confirmPassword, {
+    message: t('account.password.validMatch'),
+    path: ['confirmPassword'],
+  })
 
   const form = useForm({
     defaultValues: { newPassword: '', confirmPassword: '' },
@@ -141,7 +145,7 @@ function PasswordSection() {
           setError(err.errors[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           if (err.message.includes('requires-recent-login')) {
-            setError('Please sign out and sign back in before changing your password.')
+            setError(t('account.password.reauthError'))
           } else {
             setError(err.message)
           }
@@ -154,7 +158,7 @@ function PasswordSection() {
     <div className="space-y-4">
       {success && (
         <Alert className="mb-2">
-          <AlertDescription>Password changed successfully.</AlertDescription>
+          <AlertDescription>{t('account.password.success')}</AlertDescription>
         </Alert>
       )}
       {error && (
@@ -169,7 +173,7 @@ function PasswordSection() {
         <form.Field name="newPassword">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New password</Label>
+              <Label htmlFor="newPassword">{t('account.password.new')}</Label>
               <Input
                 id="newPassword"
                 type="password"
@@ -187,7 +191,7 @@ function PasswordSection() {
         <form.Field name="confirmPassword">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm new password</Label>
+              <Label htmlFor="confirmPassword">{t('account.password.confirm')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -205,7 +209,7 @@ function PasswordSection() {
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Changing…' : 'Change password'}
+              {isSubmitting ? t('account.password.submitting') : t('account.password.submit')}
             </Button>
           )}
         </form.Subscribe>
@@ -219,6 +223,7 @@ function PasswordSection() {
 // ---------------------------------------------------------------------------
 
 function PreferencesSection() {
+  const { t } = useTranslation()
   const { currentUser, firebaseUser } = useAuth()
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -238,6 +243,9 @@ function PreferencesSection() {
           'preferences.language': value.language,
           updatedAt: serverTimestamp(),
         })
+        // Apply language immediately
+        i18n.changeLanguage(value.language)
+        localStorage.setItem('language', value.language)
         setSuccess(true)
       } catch (err: unknown) {
         if (err instanceof Error) setError(err.message)
@@ -249,7 +257,7 @@ function PreferencesSection() {
     <div className="space-y-4">
       {success && (
         <Alert className="mb-2">
-          <AlertDescription>Preferences saved.</AlertDescription>
+          <AlertDescription>{t('account.prefs.success')}</AlertDescription>
         </Alert>
       )}
       {error && (
@@ -264,7 +272,7 @@ function PreferencesSection() {
         <form.Field name="theme">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+              <Label htmlFor="theme">{t('account.prefs.theme')}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as 'light' | 'dark')}
@@ -273,8 +281,8 @@ function PreferencesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="light">{t('account.prefs.themeLight')}</SelectItem>
+                  <SelectItem value="dark">{t('account.prefs.themeDark')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -284,7 +292,7 @@ function PreferencesSection() {
         <form.Field name="language">
           {(field) => (
             <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
+              <Label htmlFor="language">{t('account.prefs.language')}</Label>
               <Select
                 value={field.state.value}
                 onValueChange={(v) => field.handleChange(v as 'en' | 'nl')}
@@ -293,8 +301,8 @@ function PreferencesSection() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="nl">Nederlands</SelectItem>
+                  <SelectItem value="en">{t('account.prefs.langEn')}</SelectItem>
+                  <SelectItem value="nl">{t('account.prefs.langNl')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -304,7 +312,7 @@ function PreferencesSection() {
         <form.Subscribe selector={(s) => s.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving…' : 'Save preferences'}
+              {isSubmitting ? t('account.prefs.saving') : t('account.prefs.save')}
             </Button>
           )}
         </form.Subscribe>
@@ -318,21 +326,22 @@ function PreferencesSection() {
 // ---------------------------------------------------------------------------
 
 function AccountSettingsPage() {
+  const { t } = useTranslation()
   return (
     <div className="container mx-auto p-8 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Account settings</h1>
+      <h1 className="text-3xl font-bold mb-6">{t('account.title')}</h1>
       <Tabs defaultValue="profile">
         <TabsList className="mb-6">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="password">Password</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="profile">{t('account.tabProfile')}</TabsTrigger>
+          <TabsTrigger value="password">{t('account.tabPassword')}</TabsTrigger>
+          <TabsTrigger value="preferences">{t('account.tabPreferences')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>Update your display name.</CardDescription>
+              <CardTitle>{t('account.profile.title')}</CardTitle>
+              <CardDescription>{t('account.profile.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ProfileSection />
@@ -343,10 +352,8 @@ function AccountSettingsPage() {
         <TabsContent value="password">
           <Card>
             <CardHeader>
-              <CardTitle>Change password</CardTitle>
-              <CardDescription>
-                Choose a strong password of at least 8 characters.
-              </CardDescription>
+              <CardTitle>{t('account.password.title')}</CardTitle>
+              <CardDescription>{t('account.password.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <PasswordSection />
@@ -357,8 +364,8 @@ function AccountSettingsPage() {
         <TabsContent value="preferences">
           <Card>
             <CardHeader>
-              <CardTitle>Preferences</CardTitle>
-              <CardDescription>Customize your experience.</CardDescription>
+              <CardTitle>{t('account.prefs.title')}</CardTitle>
+              <CardDescription>{t('account.prefs.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <PreferencesSection />

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -28,19 +29,6 @@ import { SYSTEM_ROLES } from '@/lib/roles'
 import { SYSTEM_PERMISSIONS } from '@/lib/permissions'
 import type { UserWithId } from '@/features/users/services/userService'
 
-const schema = z.object({
-  role: z.string().min(1, 'Select a role'),
-  permissions: z.array(z.string()),
-  status: z.enum(['active', 'inactive', 'suspended']),
-})
-
-interface EditUserDialogProps {
-  user: UserWithId
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSaved?: () => void
-}
-
 // Group permissions by category for the matrix UI
 const PERMISSION_GROUPS = Array.from(
   SYSTEM_PERMISSIONS.reduce((map, p) => {
@@ -51,24 +39,39 @@ const PERMISSION_GROUPS = Array.from(
   }, new Map<string, typeof SYSTEM_PERMISSIONS>()),
 )
 
-const CATEGORY_LABELS: Record<string, string> = {
-  masterData: 'Master Data',
-  operations: 'Operations',
-  analytics: 'Analytics',
-  admin: 'Administration',
-  system: 'System',
+interface EditUserDialogProps {
+  user: UserWithId
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSaved?: () => void
 }
 
-const STATUS_OPTIONS: { value: 'active' | 'inactive' | 'suspended'; label: string }[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'suspended', label: 'Suspended' },
-]
-
 export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDialogProps) {
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
 
-  const form = useForm({
+  const schema = z.object({
+    role: z.string().min(1, t('editUserDialog.validRole')),
+    permissions: z.array(z.string()),
+    status: z.enum(['active', 'inactive', 'suspended']),
+  })
+  type FormValues = z.infer<typeof schema>
+
+  const STATUS_OPTIONS: { value: 'active' | 'inactive' | 'suspended'; label: string }[] = [
+    { value: 'active', label: t('editUserDialog.statusActive') },
+    { value: 'inactive', label: t('editUserDialog.statusInactive') },
+    { value: 'suspended', label: t('editUserDialog.statusSuspended') },
+  ]
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    masterData: t('editUserDialog.cat.masterData'),
+    operations: t('editUserDialog.cat.operations'),
+    analytics: t('editUserDialog.cat.analytics'),
+    admin: t('editUserDialog.cat.admin'),
+    system: t('editUserDialog.cat.system'),
+  }
+
+  const form = useForm<FormValues>({
     defaultValues: {
       role: user.data.role,
       permissions: user.data.permissions,
@@ -82,11 +85,11 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
         if (parsed.status !== user.data.status) {
           await setUserStatus(user.id, parsed.status)
         }
-        toast.success('User updated.')
+        toast.success(t('editUserDialog.toast'))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to save changes.'
+        const msg = err instanceof Error ? err.message : t('editUserDialog.toastError')
         setError(msg)
         toast.error(msg)
       }
@@ -106,9 +109,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit user</DialogTitle>
+          <DialogTitle>{t('editUserDialog.title')}</DialogTitle>
           <DialogDescription>
-            {user.data.displayName} &middot; {user.data.email}
+            {t('editUserDialog.description', {
+              displayName: user.data.displayName,
+              email: user.data.email,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -132,7 +138,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
                 <form.Field name="permissions">
                   {(permField) => (
                     <div className="space-y-1.5">
-                      <Label>Role</Label>
+                      <Label>{t('editUserDialog.role')}</Label>
                       <Select
                         value={roleField.state.value}
                         onValueChange={(v) =>
@@ -160,7 +166,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
             <form.Field name="status">
               {(field) => (
                 <div className="space-y-1.5">
-                  <Label>Status</Label>
+                  <Label>{t('editUserDialog.status')}</Label>
                   <Select
                     value={field.state.value}
                     onValueChange={(v) => field.handleChange(v as 'active' | 'inactive' | 'suspended')}
@@ -199,7 +205,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
               return (
                 <div className="space-y-1.5 overflow-hidden flex flex-col">
                   <div className="flex items-center gap-2">
-                    <Label>Permissions</Label>
+                    <Label>{t('editUserDialog.permissions')}</Label>
                     <Badge variant="secondary" className="text-xs">
                       {selected.has('*:*') ? 'all' : selected.size}
                     </Badge>
@@ -239,12 +245,12 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
 
           <DialogFooter className="shrink-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(isSubmitting) => (
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Saving…' : 'Save changes'}
+                  {isSubmitting ? t('editUserDialog.submitting') : t('editUserDialog.submit')}
                 </Button>
               )}
             </form.Subscribe>

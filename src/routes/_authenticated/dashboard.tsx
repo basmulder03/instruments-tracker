@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Music, ArrowRightLeft, Wrench, TrendingDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   AreaChart,
@@ -68,6 +69,7 @@ function KpiCard({
 // ---------------------------------------------------------------------------
 
 function DashboardPage() {
+  const { t } = useTranslation()
   const { data: instruments = [] } = useQuery({ queryKey: ['instruments'], queryFn: listInstruments })
   const { data: movements = [] } = useQuery({ queryKey: ['movements'], queryFn: listMovements })
   const { data: maintenance = [] } = useQuery({ queryKey: ['maintenance'], queryFn: listAllMaintenance })
@@ -115,34 +117,34 @@ function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Overview of the instrument inventory.</p>
+        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total instruments"
+          title={t('dashboard.kpi.totalInstruments')}
           value={totalInstruments}
-          sub={`${checkedOut} checked out, ${inRepair} in repair`}
+          sub={t('dashboard.kpi.instrumentsSub', { checkedOut, inRepair })}
           icon={Music}
         />
         <KpiCard
-          title="Open checkouts"
+          title={t('dashboard.kpi.openCheckouts')}
           value={openMovements}
-          sub="instruments currently out"
+          sub={t('dashboard.kpi.openCheckoutsSub')}
           icon={ArrowRightLeft}
         />
         <KpiCard
-          title="Total book value"
+          title={t('dashboard.kpi.bookValue')}
           value={euro(totalBookValue)}
-          sub="based on depreciation schedule"
+          sub={t('dashboard.kpi.bookValueSub')}
           icon={TrendingDown}
         />
         <KpiCard
-          title="Total usage logged"
-          value={`${totalUnits.toFixed(1)} units`}
-          sub="across all instruments"
+          title={t('dashboard.kpi.usageLogged')}
+          value={t('dashboard.kpi.usageUnits', { n: totalUnits.toFixed(1) })}
+          sub={t('dashboard.kpi.usageSub')}
           icon={Wrench}
         />
       </div>
@@ -152,12 +154,12 @@ function DashboardPage() {
         {/* Book value over time */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Book value over time</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.chart.bookValue')}</CardTitle>
           </CardHeader>
           <CardContent>
             {bookValueData.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No depreciation data yet. Rebuild analytics from the Analytics page.
+                {t('dashboard.empty.depreciation')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -175,7 +177,7 @@ function DashboardPage() {
                   <Area
                     type="monotone"
                     dataKey="value"
-                    name="Book value"
+                    name={t('dashboard.series.bookValue')}
                     stroke="hsl(var(--primary))"
                     fill="url(#bookValue)"
                     strokeWidth={2}
@@ -189,11 +191,11 @@ function DashboardPage() {
         {/* Maintenance cost by year */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Maintenance cost by year</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.chart.maintenanceCost')}</CardTitle>
           </CardHeader>
           <CardContent>
             {maintCostData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No maintenance records yet.</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.empty.maintenance')}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={maintCostData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -202,7 +204,7 @@ function DashboardPage() {
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} width={60} />
                   <Tooltip formatter={(v: number) => euro(v)} />
                   <Legend />
-                  <Bar dataKey="cost" name="Maintenance cost" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cost" name={t('dashboard.series.maintenanceCost')} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

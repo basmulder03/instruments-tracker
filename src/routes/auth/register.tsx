@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,21 +15,22 @@ export const Route = createFileRoute('/auth/register')({
   component: RegisterPage,
 })
 
-const registerSchema = z.object({
-  displayName: z.string().min(2, 'Display name must be at least 2 characters'),
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
-
 function RegisterPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
   const [checking, setChecking] = useState(true)
   const [adminExists, setAdminExists] = useState(false)
+
+  const registerSchema = z.object({
+    displayName: z.string().min(2, t('auth.register.validName')),
+    email: z.string().email(t('auth.register.validEmail')),
+    password: z.string().min(8, t('auth.register.validPassword')),
+    confirmPassword: z.string(),
+  }).refine((d) => d.password === d.confirmPassword, {
+    message: t('auth.register.validPasswordMatch'),
+    path: ['confirmPassword'],
+  })
 
   // If an admin already exists, redirect to login
   useEffect(() => {
@@ -51,11 +53,7 @@ function RegisterPage() {
       setError(null)
       try {
         const parsed = registerSchema.parse(value)
-        // Create the admin Auth user + Firestore doc first, so the
-        // subsequent seed writes have a valid authenticated session with
-        // permissions: ['*:*'] already in place.
         await registerFirstAdmin(parsed.email, parsed.password, parsed.displayName)
-        // Seed roles/permissions after auth is established.
         await seedSystemDataIfNeeded()
         navigate({ to: '/dashboard' })
       } catch (err: unknown) {
@@ -63,12 +61,12 @@ function RegisterPage() {
           setError(err.errors[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           if (err.message.includes('email-already-in-use')) {
-            setError('An account with this email already exists.')
+            setError(t('auth.register.errorEmailInUse'))
           } else {
             setError(err.message)
           }
         } else {
-          setError('An unexpected error occurred.')
+          setError(t('auth.register.errorUnexpected'))
         }
       }
     },
@@ -79,10 +77,8 @@ function RegisterPage() {
   return (
     <Card>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Create administrator account</CardTitle>
-        <CardDescription>
-          This form is only available before the first administrator is registered.
-        </CardDescription>
+        <CardTitle className="text-2xl">{t('auth.register.title')}</CardTitle>
+        <CardDescription>{t('auth.register.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {error && (
@@ -100,10 +96,10 @@ function RegisterPage() {
           <form.Field name="displayName">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="displayName">Full name</Label>
+                <Label htmlFor="displayName">{t('auth.register.fullName')}</Label>
                 <Input
                   id="displayName"
-                  placeholder="Jane Doe"
+                  placeholder={t('auth.register.namePlaceholder')}
                   autoComplete="name"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -119,11 +115,11 @@ function RegisterPage() {
           <form.Field name="email">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.register.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@example.com"
+                  placeholder={t('auth.register.emailPlaceholder')}
                   autoComplete="email"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -139,7 +135,7 @@ function RegisterPage() {
           <form.Field name="password">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.register.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -158,7 +154,7 @@ function RegisterPage() {
           <form.Field name="confirmPassword">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.register.confirmPassword')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -177,7 +173,7 @@ function RegisterPage() {
           <form.Subscribe selector={(s) => s.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating account…' : 'Create account'}
+                {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
               </Button>
             )}
           </form.Subscribe>
@@ -188,7 +184,7 @@ function RegisterPage() {
             to="/auth/login"
             className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
           >
-            Already have an account? Sign in
+            {t('auth.register.alreadyHaveAccount')}
           </Link>
         </div>
       </CardContent>

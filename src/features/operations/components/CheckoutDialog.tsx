@@ -9,6 +9,7 @@ import { useForm } from '@tanstack/react-form'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,15 +35,6 @@ import { checkoutInstrument } from '@/features/operations/services/movementServi
 import { useAuth } from '@/contexts/AuthContext'
 import type { InstrumentWithId } from '@/features/instruments/services/instrumentService'
 
-const schema = z.object({
-  checkoutPersonId: z.string().min(1, 'Select a person'),
-  checkoutLocationId: z.string().min(1, 'Select a location'),
-  checkoutAt: z.string().min(1, 'Date/time is required'),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
-
 interface CheckoutDialogProps {
   instrument: InstrumentWithId
   open: boolean
@@ -62,8 +54,18 @@ export function CheckoutDialog({
   onOpenChange,
   onSaved,
 }: CheckoutDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser, currentUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
+
+  const schema = z.object({
+    checkoutPersonId: z.string().min(1, t('checkoutDialog.validPerson')),
+    checkoutLocationId: z.string().min(1, t('checkoutDialog.validLocation')),
+    checkoutAt: z.string().min(1, t('checkoutDialog.validDate')),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const { data: people = [] } = useQuery({ queryKey: ['people'], queryFn: listPeople })
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
@@ -90,7 +92,7 @@ export function CheckoutDialog({
           firebaseUser!.uid,
           currentUser?.email ?? firebaseUser!.email ?? '',
         )
-        toast.success(`${instrument.data.naam} checked out.`)
+        toast.success(t('checkoutDialog.toast', { name: instrument.data.naam }))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -105,7 +107,7 @@ export function CheckoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Check out — {instrument.data.naam}</DialogTitle>
+          <DialogTitle>{t('checkoutDialog.title', { instrumentName: instrument.data.naam })}</DialogTitle>
         </DialogHeader>
 
         <form
@@ -118,13 +120,13 @@ export function CheckoutDialog({
           <form.Field name="checkoutPersonId">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Person</Label>
+                <Label>{t('checkoutDialog.person')}</Label>
                 <Select
                   value={f.state.value}
                   onValueChange={(v) => f.handleChange(v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select person…" />
+                    <SelectValue placeholder={t('checkoutDialog.personPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {people.map((p) => (
@@ -145,13 +147,13 @@ export function CheckoutDialog({
           <form.Field name="checkoutLocationId">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Location (current / pickup)</Label>
+                <Label>{t('checkoutDialog.location')}</Label>
                 <Select
                   value={f.state.value}
                   onValueChange={(v) => f.handleChange(v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select location…" />
+                    <SelectValue placeholder={t('checkoutDialog.locationPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.map((l) => (
@@ -172,7 +174,7 @@ export function CheckoutDialog({
           <form.Field name="checkoutAt">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Checkout date &amp; time</Label>
+                <Label>{t('checkoutDialog.dateTime')}</Label>
                 <Input
                   type="datetime-local"
                   value={f.state.value}
@@ -190,7 +192,7 @@ export function CheckoutDialog({
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
+                <Label>{t('checkoutDialog.notes')}</Label>
                 <Textarea
                   rows={2}
                   value={f.state.value}
@@ -203,12 +205,12 @@ export function CheckoutDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Checking out…' : 'Check out'}
+                  {submitting ? t('checkoutDialog.submitting') : t('checkoutDialog.submit')}
                 </Button>
               )}
             </form.Subscribe>

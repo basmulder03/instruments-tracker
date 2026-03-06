@@ -9,6 +9,7 @@ import { useForm } from '@tanstack/react-form'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,14 +35,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import type { InstrumentWithId } from '@/features/instruments/services/instrumentService'
 import type { MovementWithId } from '@/features/operations/services/movementService'
 
-const schema = z.object({
-  returnLocationId: z.string().min(1, 'Select a return location'),
-  returnAt: z.string().min(1, 'Date/time is required'),
-  notes: z.string(),
-})
-
-type FormValues = z.infer<typeof schema>
-
 interface ReturnDialogProps {
   instrument: InstrumentWithId
   openMovement: MovementWithId
@@ -63,8 +56,17 @@ export function ReturnDialog({
   onOpenChange,
   onSaved,
 }: ReturnDialogProps) {
+  const { t } = useTranslation()
   const { firebaseUser, currentUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
+
+  const schema = z.object({
+    returnLocationId: z.string().min(1, t('returnDialog.validLocation')),
+    returnAt: z.string().min(1, t('returnDialog.validDate')),
+    notes: z.string(),
+  })
+
+  type FormValues = z.infer<typeof schema>
 
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
 
@@ -89,7 +91,7 @@ export function ReturnDialog({
           firebaseUser!.uid,
           currentUser?.email ?? firebaseUser!.email ?? '',
         )
-        toast.success(`${instrument.data.naam} returned.`)
+        toast.success(t('returnDialog.toast', { name: instrument.data.naam }))
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
@@ -104,7 +106,7 @@ export function ReturnDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Return — {instrument.data.naam}</DialogTitle>
+          <DialogTitle>{t('returnDialog.title', { instrumentName: instrument.data.naam })}</DialogTitle>
         </DialogHeader>
 
         <form
@@ -117,13 +119,13 @@ export function ReturnDialog({
           <form.Field name="returnLocationId">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Return location</Label>
+                <Label>{t('returnDialog.location')}</Label>
                 <Select
                   value={f.state.value}
                   onValueChange={(v) => f.handleChange(v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select location…" />
+                    <SelectValue placeholder={t('returnDialog.locationPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.map((l) => (
@@ -144,7 +146,7 @@ export function ReturnDialog({
           <form.Field name="returnAt">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Return date &amp; time</Label>
+                <Label>{t('returnDialog.dateTime')}</Label>
                 <Input
                   type="datetime-local"
                   value={f.state.value}
@@ -162,7 +164,7 @@ export function ReturnDialog({
           <form.Field name="notes">
             {(f) => (
               <div className="space-y-1.5">
-                <Label>Notes</Label>
+                <Label>{t('returnDialog.notes')}</Label>
                 <Textarea
                   rows={2}
                   value={f.state.value}
@@ -175,12 +177,12 @@ export function ReturnDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Returning…' : 'Return instrument'}
+                  {submitting ? t('returnDialog.submitting') : t('returnDialog.submit')}
                 </Button>
               )}
             </form.Subscribe>

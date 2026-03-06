@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +38,7 @@ function fmtTimestamp(ts: Timestamp | null | undefined) {
 }
 
 function AuditLogPage() {
+  const { t } = useTranslation()
   const [verifyResult, setVerifyResult] = useState<
     { ok: true } | { ok: false; brokenAt: string; message: string } | null
   >(null)
@@ -63,9 +65,9 @@ function AuditLogPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Audit Log</h1>
+          <h1 className="text-2xl font-bold">{t('audit.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Immutable, hash-chained record of all system actions.
+            {t('audit.subtitle')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -76,7 +78,7 @@ function AuditLogPage() {
             disabled={verifying || entries.length === 0}
           >
             <ShieldCheck className="mr-2 size-4" />
-            {verifying ? 'Verifying…' : 'Verify chain'}
+            {verifying ? t('audit.verifying') : t('audit.verify')}
           </Button>
           <Button variant="ghost" size="icon" onClick={() => refetch()}>
             <RefreshCw className="size-4" />
@@ -89,13 +91,15 @@ function AuditLogPage() {
         verifyResult.ok ? (
           <Alert className="flex items-center gap-2 border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300">
             <ShieldCheck className="size-4 shrink-0" />
-            <span className="text-sm font-medium">Chain integrity verified — all {entries.length} entries are intact.</span>
+            <span className="text-sm font-medium">
+              {t('audit.verifySuccess', { n: entries.length })}
+            </span>
           </Alert>
         ) : (
           <Alert variant="destructive" className="flex items-center gap-2">
             <ShieldAlert className="size-4 shrink-0" />
             <span className="text-sm font-medium">
-              Chain broken at entry <span className="font-mono">{verifyResult.brokenAt}</span>: {verifyResult.message}
+              {t('audit.verifyFail', { id: verifyResult.brokenAt, message: verifyResult.message })}
             </span>
           </Alert>
         )
@@ -105,13 +109,13 @@ function AuditLogPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity type</TableHead>
-              <TableHead>Entity ID</TableHead>
-              <TableHead>Details</TableHead>
+              <TableHead>{t('common.id')}</TableHead>
+              <TableHead>{t('audit.col.timestamp')}</TableHead>
+              <TableHead>{t('audit.col.user')}</TableHead>
+              <TableHead>{t('audit.col.action')}</TableHead>
+              <TableHead>{t('audit.col.entityType')}</TableHead>
+              <TableHead>{t('audit.col.entityId')}</TableHead>
+              <TableHead>{t('audit.col.details')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -119,7 +123,9 @@ function AuditLogPage() {
               <TableSkeleton cols={7} />
             ) : entries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No audit entries yet.</TableCell>
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  {t('audit.empty')}
+                </TableCell>
               </TableRow>
             ) : (
               paged.map((entry) => (
