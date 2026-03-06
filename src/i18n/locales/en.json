@@ -188,6 +188,9 @@
   "instrumentHistory.cost": "Cost: €{{amount}}",
   "instrumentHistory.usage": "{{units}} {{unitType}}",
   "instrumentHistory.empty": "No history recorded yet.",
+  "instrumentHistory.photo": "Photo",
+  "instrumentHistory.damagePhotos": "Damage photos",
+  "instrumentHistory.viewPhoto": "View full size",
 
   "instrumentDialog.titleEdit": "Edit instrument",
   "instrumentDialog.titleAdd": "Add instrument",

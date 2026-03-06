@@ -85,6 +85,22 @@ function InstrumentHistoryPage() {
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
+        {/* Instrument photo thumbnail */}
+        {instrument?.data.photoUrl && (
+          <a
+            href={instrument.data.photoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={t('instrumentHistory.viewPhoto')}
+            className="shrink-0"
+          >
+            <img
+              src={instrument.data.photoUrl}
+              alt={t('instrumentHistory.photo')}
+              className="w-16 h-16 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+            />
+          </a>
+        )}
         <div className="flex-1">
           <h1 className="text-2xl font-bold">
             {instrument ? instrument.data.naam : instrumentId}
@@ -176,6 +192,29 @@ function InstrumentHistoryPage() {
                       <p>{t('instrumentHistory.cost', { amount: event.maintenance.data.cost.toFixed(2) })}</p>
                       {event.maintenance.data.notes && (
                         <p>{t('instrumentHistory.notes', { text: event.maintenance.data.notes })}</p>
+                      )}
+                      {/* Damage photo thumbnails */}
+                      {event.maintenance.data.damagePhotoUrls && event.maintenance.data.damagePhotoUrls.length > 0 && (
+                        <div className="pt-1">
+                          <p className="text-xs font-medium mb-1">{t('instrumentHistory.damagePhotos')}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {event.maintenance.data.damagePhotoUrls.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={t('instrumentHistory.viewPhoto')}
+                              >
+                                <img
+                                  src={url}
+                                  alt={t('instrumentHistory.damagePhotos')}
+                                  className="w-16 h-16 object-cover rounded border hover:opacity-80 transition-opacity"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

@@ -177,31 +177,33 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
                     {field.state.meta.errors.length > 0 && (
                       <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
                     )}
-                    <div className="rounded-md border p-3 space-y-4">
-                      {PERMISSION_GROUPS.map(([category, perms]) => (
-                        <div key={category}>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                            {CATEGORY_LABELS[category] ?? category}
-                          </p>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {perms.map((p) => (
-                              <label
-                                key={p.id}
-                                className="flex items-center gap-2 cursor-pointer group"
-                              >
-                                <Checkbox
-                                  checked={selected.has(p.id)}
-                                  onCheckedChange={() => toggle(p.id)}
-                                />
-                                <span className="text-xs group-hover:text-foreground text-muted-foreground">
-                                  {p.data.description}
-                                </span>
-                              </label>
-                            ))}
+                    <ScrollArea className="h-[280px] rounded-md border">
+                      <div className="p-3 space-y-4 pr-6">
+                        {PERMISSION_GROUPS.map(([category, perms]) => (
+                          <div key={category}>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                              {CATEGORY_LABELS[category] ?? category}
+                            </p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {perms.map((p) => (
+                                <label
+                                  key={p.id}
+                                  className="flex items-center gap-2 cursor-pointer group"
+                                >
+                                  <Checkbox
+                                    checked={selected.has(p.id)}
+                                    onCheckedChange={() => toggle(p.id)}
+                                  />
+                                  <span className="text-xs group-hover:text-foreground text-muted-foreground">
+                                    {p.data.description}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
                 )
               }}

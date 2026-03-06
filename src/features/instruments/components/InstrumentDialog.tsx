@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -22,9 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Alert } from '@/components/ui/alert'
+import { ComboboxInput } from '@/components/common/ComboboxInput'
 import {
   createInstrument,
   updateInstrument,
+  listInstruments,
   type InstrumentInput,
   type InstrumentWithId,
 } from '@/features/instruments/services/instrumentService'
@@ -81,6 +84,14 @@ export function InstrumentDialog({
   const { firebaseUser } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!instrument
+
+  // Fetch all instruments to derive type/brand suggestions (uses cache from parent page)
+  const { data: allInstruments = [] } = useQuery({
+    queryKey: ['instruments'],
+    queryFn: listInstruments,
+  })
+  const typeSuggestions = [...new Set(allInstruments.map((i) => i.data.type).filter(Boolean))]
+  const brandSuggestions = [...new Set(allInstruments.map((i) => i.data.merk).filter(Boolean))]
 
   // Photo upload state (managed outside TanStack Form)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
@@ -219,10 +230,22 @@ export function InstrumentDialog({
               <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.namePlaceholder')} />
             ))}
             {field('type', t('instrumentDialog.type'), (v, onChange, onBlur) => (
-              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.typePlaceholder')} />
+              <ComboboxInput
+                value={v as string}
+                onChange={onChange}
+                onBlur={onBlur}
+                suggestions={typeSuggestions}
+                placeholder={t('instrumentDialog.typePlaceholder')}
+              />
             ))}
             {field('merk', t('instrumentDialog.brand'), (v, onChange, onBlur) => (
-              <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} placeholder={t('instrumentDialog.brandPlaceholder')} />
+              <ComboboxInput
+                value={v as string}
+                onChange={onChange}
+                onBlur={onBlur}
+                suggestions={brandSuggestions}
+                placeholder={t('instrumentDialog.brandPlaceholder')}
+              />
             ))}
             {field('serienummer', t('instrumentDialog.serial'), (v, onChange, onBlur) => (
               <Input value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />

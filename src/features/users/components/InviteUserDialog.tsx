@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import { Button } from '@/components/ui/button'
 import {
@@ -37,8 +37,10 @@ interface RoleOption {
 }
 
 async function listAllRoles(): Promise<RoleOption[]> {
-  const snap = await getDocs(query(collection(db, 'roles'), orderBy('name')))
-  return snap.docs.map((d) => ({ id: d.id, name: (d.data() as Role).name }))
+  const snap = await getDocs(collection(db, 'roles'))
+  return snap.docs
+    .map((d) => ({ id: d.id, name: (d.data() as Role).name ?? d.id }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 interface InviteUserDialogProps {
