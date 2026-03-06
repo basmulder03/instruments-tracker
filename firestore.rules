@@ -7,128 +7,138 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Only call this when request.auth != null AND the user doc is known to exist
     function userPermissions() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions;
     }
 
-    // Checks for exact match, resource wildcard, action wildcard, or superadmin
+    // Safe wrapper: returns false immediately if not authenticated,
+    // avoiding the get() call for unauthenticated requests.
     function hasPermission(resource, action) {
-      return (resource + ':' + action) in userPermissions()
-          || (resource + ':*')        in userPermissions()
-          || ('*:' + action)          in userPermissions()
-          || '*:*'                    in userPermissions();
-    }
-
-    function isAdmin() {
-      return '*:*' in userPermissions();
+      return isAuthenticated()
+          && (
+               (resource + ':' + action) in userPermissions()
+            || (resource + ':*')          in userPermissions()
+            || ('*:' + action)            in userPermissions()
+            || '*:*'                      in userPermissions()
+             );
     }
 
     // Users collection
+    // A user can always read/update their own document (needed on first login
+    // before any permission doc is loaded). All other operations require a
+    // permission check via hasPermission.
     match /users/{userId} {
-      allow read:   if isAuthenticated() && (request.auth.uid == userId || hasPermission('users', 'read'));
-      allow create: if isAuthenticated() && hasPermission('users', 'create');
-      allow update: if isAuthenticated() && (request.auth.uid == userId || hasPermission('users', 'update'));
-      allow delete: if isAuthenticated() && hasPermission('users', 'delete');
+      allow read:   if isAuthenticated()
+                    && (request.auth.uid == userId || hasPermission('users', 'read'));
+      allow create: if hasPermission('users', 'create');
+      allow update: if isAuthenticated()
+                    && (request.auth.uid == userId || hasPermission('users', 'update'));
+      allow delete: if hasPermission('users', 'delete');
     }
 
     // Roles collection
     match /roles/{roleId} {
-      allow read:   if isAuthenticated() && hasPermission('roles', 'read');
-      allow create: if isAuthenticated() && hasPermission('roles', 'create');
-      allow update: if isAuthenticated() && hasPermission('roles', 'update');
-      allow delete: if isAuthenticated() && hasPermission('roles', 'delete');
+      allow read:   if hasPermission('roles', 'read');
+      allow create: if hasPermission('roles', 'create');
+      allow update: if hasPermission('roles', 'update');
+      allow delete: if hasPermission('roles', 'delete');
     }
 
     // Permissions collection
     match /permissions/{permissionId} {
-      allow read:   if isAuthenticated() && hasPermission('permissions', 'read');
-      allow create: if isAuthenticated() && hasPermission('permissions', 'create');
-      allow update: if isAuthenticated() && hasPermission('permissions', 'update');
-      allow delete: if isAuthenticated() && hasPermission('permissions', 'delete');
+      allow read:   if hasPermission('permissions', 'read');
+      allow create: if hasPermission('permissions', 'create');
+      allow update: if hasPermission('permissions', 'update');
+      allow delete: if hasPermission('permissions', 'delete');
     }
 
     // Invitations collection
-    // Unauthenticated reads are needed so a prospective user can verify their token
+    // acceptInvitation() queries by token before the user is authenticated,
+    // so allow a document read when the stored token matches the queried token.
     match /invitations/{invitationId} {
-      allow read:   if resource.data.token == request.query.token
-                    || (isAuthenticated() && hasPermission('invitations', 'read'));
-      allow create: if isAuthenticated() && hasPermission('invitations', 'create');
-      allow update: if isAuthenticated() && hasPermission('invitations', 'update');
-      allow delete: if isAuthenticated() && hasPermission('invitations', 'delete');
+      allow read:   if (isAuthenticated() && hasPermission('invitations', 'read'))
+                    || resource.data.token == request.resource.data.token;
+      allow create: if hasPermission('invitations', 'create');
+      allow update: if hasPermission('invitations', 'update')
+                    || (isAuthenticated()
+                        && resource.data.token != null
+                        && request.resource.data.status in ['accepted', 'expired']);
+      allow delete: if hasPermission('invitations', 'delete');
     }
 
     // Instruments collection
     match /instruments/{instrumentId} {
-      allow read:   if isAuthenticated() && hasPermission('instruments', 'read');
-      allow create: if isAuthenticated() && hasPermission('instruments', 'create');
-      allow update: if isAuthenticated() && hasPermission('instruments', 'update');
-      allow delete: if isAuthenticated() && hasPermission('instruments', 'delete');
+      allow read:   if hasPermission('instruments', 'read');
+      allow create: if hasPermission('instruments', 'create');
+      allow update: if hasPermission('instruments', 'update');
+      allow delete: if hasPermission('instruments', 'delete');
     }
 
     // People collection
     match /people/{personId} {
-      allow read:   if isAuthenticated() && hasPermission('people', 'read');
-      allow create: if isAuthenticated() && hasPermission('people', 'create');
-      allow update: if isAuthenticated() && hasPermission('people', 'update');
-      allow delete: if isAuthenticated() && hasPermission('people', 'delete');
+      allow read:   if hasPermission('people', 'read');
+      allow create: if hasPermission('people', 'create');
+      allow update: if hasPermission('people', 'update');
+      allow delete: if hasPermission('people', 'delete');
     }
 
     // Locations collection
     match /locations/{locationId} {
-      allow read:   if isAuthenticated() && hasPermission('locations', 'read');
-      allow create: if isAuthenticated() && hasPermission('locations', 'create');
-      allow update: if isAuthenticated() && hasPermission('locations', 'update');
-      allow delete: if isAuthenticated() && hasPermission('locations', 'delete');
+      allow read:   if hasPermission('locations', 'read');
+      allow create: if hasPermission('locations', 'create');
+      allow update: if hasPermission('locations', 'update');
+      allow delete: if hasPermission('locations', 'delete');
     }
 
     // Movements collection
     match /movements/{movementId} {
-      allow read:   if isAuthenticated() && hasPermission('movements', 'read');
-      allow create: if isAuthenticated() && hasPermission('movements', 'create');
-      allow update: if isAuthenticated() && hasPermission('movements', 'update');
-      allow delete: if isAuthenticated() && hasPermission('movements', 'delete');
+      allow read:   if hasPermission('movements', 'read');
+      allow create: if hasPermission('movements', 'create');
+      allow update: if hasPermission('movements', 'update');
+      allow delete: if hasPermission('movements', 'delete');
     }
 
     // Maintenance collection
     match /maintenance/{maintenanceId} {
-      allow read:   if isAuthenticated() && hasPermission('maintenance', 'read');
-      allow create: if isAuthenticated() && hasPermission('maintenance', 'create');
-      allow update: if isAuthenticated() && hasPermission('maintenance', 'update');
-      allow delete: if isAuthenticated() && hasPermission('maintenance', 'delete');
+      allow read:   if hasPermission('maintenance', 'read');
+      allow create: if hasPermission('maintenance', 'create');
+      allow update: if hasPermission('maintenance', 'update');
+      allow delete: if hasPermission('maintenance', 'delete');
     }
 
     // Usage events collection
     match /usage_events/{usageEventId} {
-      allow read:   if isAuthenticated() && hasPermission('usage', 'read');
-      allow create: if isAuthenticated() && hasPermission('usage', 'create');
-      allow update: if isAuthenticated() && hasPermission('usage', 'update');
-      allow delete: if isAuthenticated() && hasPermission('usage', 'delete');
+      allow read:   if hasPermission('usage', 'read');
+      allow create: if hasPermission('usage', 'create');
+      allow update: if hasPermission('usage', 'update');
+      allow delete: if hasPermission('usage', 'delete');
     }
 
-    // Analytics derived collections (read: analytics:view, write: analytics:rebuild)
+    // Analytics derived collections
     match /usage_stats/{usageStatId} {
-      allow read:  if isAuthenticated() && hasPermission('analytics', 'view');
-      allow write: if isAuthenticated() && hasPermission('analytics', 'rebuild');
+      allow read:  if hasPermission('analytics', 'view');
+      allow write: if hasPermission('analytics', 'rebuild');
     }
 
     match /maintenance_predictions/{predictionId} {
-      allow read:  if isAuthenticated() && hasPermission('analytics', 'view');
-      allow write: if isAuthenticated() && hasPermission('analytics', 'rebuild');
+      allow read:  if hasPermission('analytics', 'view');
+      allow write: if hasPermission('analytics', 'rebuild');
     }
 
     match /depreciation/{depreciationId} {
-      allow read:  if isAuthenticated() && hasPermission('analytics', 'view');
-      allow write: if isAuthenticated() && hasPermission('analytics', 'rebuild');
+      allow read:  if hasPermission('analytics', 'view');
+      allow write: if hasPermission('analytics', 'rebuild');
     }
 
-    // Audit log — append-only; updates and deletes are permanently forbidden
+    // Audit log — append-only
     match /audit_log/{auditId} {
-      allow read:          if isAuthenticated() && hasPermission('audit', 'view');
-      allow create:        if isAuthenticated();
+      allow read:           if hasPermission('audit', 'view');
+      allow create:         if isAuthenticated();
       allow update, delete: if false;
     }
 
-    // ID counters collection (used by idGenerator.ts) — authenticated writes only
+    // ID counters used by idGenerator.ts
     match /id_counters/{counterId} {
       allow read, write: if isAuthenticated();
     }
