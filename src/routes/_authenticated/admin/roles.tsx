@@ -193,11 +193,13 @@ function RolesPage() {
       <PaginationBar />
 
       {/* Create dialog */}
-      <RoleDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSaved={invalidate}
-      />
+      {createOpen && (
+        <RoleDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onSaved={invalidate}
+        />
+      )}
 
       {/* Edit dialog */}
       {editRole && (

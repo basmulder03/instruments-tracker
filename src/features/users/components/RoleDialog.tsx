@@ -90,8 +90,8 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90vh]">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEdit ? t('roleDialog.titleEdit') : t('roleDialog.titleCreate')}
           </DialogTitle>
@@ -105,11 +105,11 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
             e.preventDefault()
             form.handleSubmit()
           }}
-          className="flex flex-col min-h-0 flex-1"
+          className="flex flex-col gap-4 min-h-0 flex-1 overflow-hidden"
         >
           {/* Scrollable body */}
-          <ScrollArea className="flex-1 min-h-0 pr-3">
-            <div className="flex flex-col gap-4">
+          <ScrollArea className="flex-1">
+            <div className="flex flex-col gap-4 pr-4">
             {error && (
               <Alert variant="destructive" className="text-sm">
                 {error}
@@ -210,7 +210,7 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
           </ScrollArea>
 
           {/* Pinned footer */}
-          <DialogFooter className="pt-4 shrink-0">
+          <DialogFooter className="shrink-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
