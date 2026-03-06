@@ -498,5 +498,41 @@
   "roleDialog.toastError": "Failed to save role.",
   "roleDialog.validName": "Role name is required",
   "roleDialog.validDescription": "Description is required",
-  "roleDialog.validPermissions": "Select at least one permission"
+  "roleDialog.validPermissions": "Select at least one permission",
+
+  "nav.privacy": "Privacy",
+
+  "privacy.title": "Privacy & Data Retention",
+  "privacy.subtitle": "GDPR / AVG — manage personal data and audit log retention.",
+
+  "privacy.retention.title": "Audit Log Retention",
+  "privacy.retention.description": "Audit log entries older than this threshold are automatically deleted by the weekly scheduled function.",
+  "privacy.retention.label": "Retention period (days)",
+  "privacy.retention.save": "Save",
+  "privacy.retention.saving": "Saving…",
+  "privacy.retention.toast": "Retention period saved.",
+  "privacy.retention.toastError": "Failed to save retention period.",
+  "privacy.retention.valid": "Must be at least 1 day",
+
+  "privacy.users.title": "User Data",
+  "privacy.users.description": "Export, anonymise, or permanently delete a user's personal data. Operational records (movements, maintenance, audit trail) are preserved.",
+  "privacy.users.col.name": "Name",
+  "privacy.users.col.email": "Email",
+  "privacy.users.col.status": "Status",
+  "privacy.users.col.actions": "Actions",
+  "privacy.users.export": "Export",
+  "privacy.users.anonymise": "Anonymise",
+  "privacy.users.delete": "Delete",
+  "privacy.users.exportToast": "Data exported for {{name}}.",
+  "privacy.users.anonymiseTitle": "Anonymise {{name}}?",
+  "privacy.users.anonymiseDescription": "This replaces all personal fields (email, display name) with anonymised placeholders. This cannot be undone.",
+  "privacy.users.anonymiseConfirm": "Anonymise",
+  "privacy.users.anonymiseToast": "User anonymised.",
+  "privacy.users.anonymiseToastError": "Failed to anonymise user.",
+  "privacy.users.deleteTitle": "Permanently delete {{name}}?",
+  "privacy.users.deleteDescription": "This removes the Firestore user record. The Firebase Auth account must be deleted separately by a super admin. This cannot be undone.",
+  "privacy.users.deleteConfirm": "Delete",
+  "privacy.users.deleteToast": "User record deleted.",
+  "privacy.users.deleteToastError": "Failed to delete user.",
+  "privacy.users.empty": "No users found."
 }

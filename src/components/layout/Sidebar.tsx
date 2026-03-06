@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ClipboardList,
   UserCog,
+  ShieldAlert,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -87,6 +88,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/admin/roles',
     icon: ShieldCheck,
     permission: { action: 'read', subject: 'Role' },
+  },
+  {
+    labelKey: 'nav.privacy',
+    to: '/admin/privacy',
+    icon: ShieldAlert,
+    permission: { action: 'manage', subject: 'Privacy' },
   },
 ]
 

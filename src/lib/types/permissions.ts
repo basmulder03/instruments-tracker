@@ -19,6 +19,7 @@ export type Actions =
   | 'settings'
   | 'backup'
   | 'seed'
+  | 'anonymise'
   | '*';
 
 export type Subjects =
@@ -33,6 +34,7 @@ export type Subjects =
   | 'User'
   | 'Role'
   | 'Audit'
+  | 'Privacy'
   | 'System'
   | 'all';
 

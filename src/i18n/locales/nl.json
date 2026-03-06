@@ -498,5 +498,41 @@
   "roleDialog.toastError": "Opslaan van rol mislukt.",
   "roleDialog.validName": "Rolnaam is verplicht",
   "roleDialog.validDescription": "Beschrijving is verplicht",
-  "roleDialog.validPermissions": "Selecteer minimaal één recht"
+  "roleDialog.validPermissions": "Selecteer minimaal één recht",
+
+  "nav.privacy": "Privacy",
+
+  "privacy.title": "Privacy & Gegevensbewaring",
+  "privacy.subtitle": "AVG / GDPR — beheer persoonsgegevens en de bewaarperiode van het auditlogboek.",
+
+  "privacy.retention.title": "Bewaarperiode auditlogboek",
+  "privacy.retention.description": "Auditlogregels ouder dan deze drempelwaarde worden automatisch verwijderd door de wekelijkse geplande functie.",
+  "privacy.retention.label": "Bewaarperiode (dagen)",
+  "privacy.retention.save": "Opslaan",
+  "privacy.retention.saving": "Opslaan…",
+  "privacy.retention.toast": "Bewaarperiode opgeslagen.",
+  "privacy.retention.toastError": "Opslaan van bewaarperiode mislukt.",
+  "privacy.retention.valid": "Minimaal 1 dag",
+
+  "privacy.users.title": "Gebruikersgegevens",
+  "privacy.users.description": "Exporteer, anonimiseer of verwijder definitief de persoonsgegevens van een gebruiker. Operationele records (uitleningen, onderhoud, auditspoor) blijven bewaard.",
+  "privacy.users.col.name": "Naam",
+  "privacy.users.col.email": "E-mail",
+  "privacy.users.col.status": "Status",
+  "privacy.users.col.actions": "Acties",
+  "privacy.users.export": "Exporteren",
+  "privacy.users.anonymise": "Anonimiseren",
+  "privacy.users.delete": "Verwijderen",
+  "privacy.users.exportToast": "Gegevens geëxporteerd voor {{name}}.",
+  "privacy.users.anonymiseTitle": "{{name}} anonimiseren?",
+  "privacy.users.anonymiseDescription": "Alle persoonlijke velden (e-mail, weergavenaam) worden vervangen door geanonimiseerde waarden. Dit kan niet ongedaan worden gemaakt.",
+  "privacy.users.anonymiseConfirm": "Anonimiseren",
+  "privacy.users.anonymiseToast": "Gebruiker geanonimiseerd.",
+  "privacy.users.anonymiseToastError": "Anonimiseren mislukt.",
+  "privacy.users.deleteTitle": "{{name}} definitief verwijderen?",
+  "privacy.users.deleteDescription": "Het Firestore-gebruikersrecord wordt verwijderd. Het Firebase Auth-account moet afzonderlijk door een superbeheerder worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+  "privacy.users.deleteConfirm": "Verwijderen",
+  "privacy.users.deleteToast": "Gebruikersrecord verwijderd.",
+  "privacy.users.deleteToastError": "Verwijderen van gebruiker mislukt.",
+  "privacy.users.empty": "Geen gebruikers gevonden."
 }

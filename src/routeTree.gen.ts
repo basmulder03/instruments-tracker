@@ -27,6 +27,7 @@ import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedInstrumentsInstrumentIdRouteImport } from './routes/_authenticated/instruments/$instrumentId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
+import { Route as AuthenticatedAdminPrivacyRouteImport } from './routes/_authenticated/admin/privacy'
 
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/auth',
@@ -125,6 +126,12 @@ const AuthenticatedAdminRolesRoute = AuthenticatedAdminRolesRouteImport.update({
   path: '/admin/roles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminPrivacyRoute =
+  AuthenticatedAdminPrivacyRouteImport.update({
+    id: '/admin/privacy',
+    path: '/admin/privacy',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
@@ -152,6 +160,7 @@ export interface FileRoutesByTo {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
@@ -173,6 +182,7 @@ export interface FileRoutesById {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/_authenticated/admin/privacy': typeof AuthenticatedAdminPrivacyRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/admin/privacy'
     | '/admin/roles'
     | '/admin/users'
     | '/instruments/$instrumentId'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/admin/privacy'
     | '/admin/roles'
     | '/admin/users'
     | '/instruments/$instrumentId'
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/_authenticated/admin/privacy'
     | '/_authenticated/admin/roles'
     | '/_authenticated/admin/users'
     | '/_authenticated/instruments/$instrumentId'
@@ -380,11 +393,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRolesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/privacy': {
+      id: '/_authenticated/admin/privacy'
+      path: '/admin/privacy'
+      fullPath: '/admin/privacy'
+      preLoaderRoute: typeof AuthenticatedAdminPrivacyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedAdminPrivacyRoute: typeof AuthenticatedAdminPrivacyRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedInstrumentsInstrumentIdRoute: typeof AuthenticatedInstrumentsInstrumentIdRoute
@@ -400,6 +421,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedAdminPrivacyRoute: AuthenticatedAdminPrivacyRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedInstrumentsInstrumentIdRoute:
