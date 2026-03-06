@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -13,14 +13,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Can } from '@/contexts/AbilityContext'
 import {
   listInstruments,
   deleteInstrument,
   type InstrumentWithId,
 } from '@/features/instruments/services/instrumentService'
+import { getOpenMovement } from '@/features/operations/services/movementService'
 import { InstrumentDialog } from '@/features/instruments/components/InstrumentDialog'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
+import { CheckoutDialog } from '@/features/operations/components/CheckoutDialog'
+import { ReturnDialog } from '@/features/operations/components/ReturnDialog'
+import { MaintenanceDialog } from '@/features/operations/components/MaintenanceDialog'
+import { UsageEventDialog } from '@/features/operations/components/UsageEventDialog'
+import type { MovementWithId } from '@/features/operations/services/movementService'
 
 export const Route = createFileRoute('/_authenticated/instruments/')({
   component: InstrumentsPage,
@@ -38,12 +51,20 @@ const STATUS_LABEL: Record<string, string> = {
   IN_REPAIR: 'In repair',
 }
 
+type ActiveDialog =
+  | { type: 'edit'; instrument: InstrumentWithId }
+  | { type: 'delete'; instrument: InstrumentWithId }
+  | { type: 'checkout'; instrument: InstrumentWithId }
+  | { type: 'return'; instrument: InstrumentWithId; movement: MovementWithId }
+  | { type: 'maintenance'; instrument: InstrumentWithId }
+  | { type: 'usage'; instrument: InstrumentWithId }
+  | null
+
 function InstrumentsPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editing, setEditing] = useState<InstrumentWithId | null>(null)
-  const [deleting, setDeleting] = useState<InstrumentWithId | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [active, setActive] = useState<ActiveDialog>(null)
 
   const { data: instruments = [], isLoading } = useQuery({
     queryKey: ['instruments'],
@@ -62,13 +83,25 @@ function InstrumentsPage() {
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['instruments'] })
+    queryClient.invalidateQueries({ queryKey: ['movements'] })
   }
 
   async function handleDelete() {
-    if (!deleting) return
-    await deleteInstrument(deleting.id)
-    setDeleting(null)
+    if (active?.type !== 'delete') return
+    await deleteInstrument(active.instrument.id)
+    setActive(null)
     invalidate()
+  }
+
+  /** Open the return dialog — need to fetch the open movement first */
+  async function openReturnDialog(instrument: InstrumentWithId) {
+    const movement = await getOpenMovement(instrument.id)
+    if (!movement) {
+      // Shouldn't happen but guard anyway
+      queryClient.invalidateQueries({ queryKey: ['instruments'] })
+      return
+    }
+    setActive({ type: 'return', instrument, movement })
   }
 
   return (
@@ -81,7 +114,7 @@ function InstrumentsPage() {
           </p>
         </div>
         <Can I="create" a="Instrument">
-          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
             <Plus className="mr-2 size-4" />
             Add instrument
           </Button>
@@ -107,7 +140,7 @@ function InstrumentsPage() {
               <TableHead>Type</TableHead>
               <TableHead>Brand</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-20" />
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -134,18 +167,66 @@ function InstrumentsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Can I="update" a="Instrument">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditing(ins); setDialogOpen(true) }}>
-                          <Pencil className="size-4" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="size-4" />
+                          <span className="sr-only">Actions</span>
                         </Button>
-                      </Can>
-                      <Can I="delete" a="Instrument">
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleting(ins)}>
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </Can>
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {/* Checkout / Return — status-dependent */}
+                        {ins.data.currentStatus === 'IN_STORAGE' && (
+                          <Can I="checkout" a="Instrument">
+                            <DropdownMenuItem onClick={() => setActive({ type: 'checkout', instrument: ins })}>
+                              <LogOut className="mr-2 size-4" />
+                              Check out
+                            </DropdownMenuItem>
+                          </Can>
+                        )}
+                        {ins.data.currentStatus === 'CHECKED_OUT' && (
+                          <Can I="return" a="Instrument">
+                            <DropdownMenuItem onClick={() => openReturnDialog(ins)}>
+                              <LogIn className="mr-2 size-4" />
+                              Return
+                            </DropdownMenuItem>
+                          </Can>
+                        )}
+
+                        {/* Operations */}
+                        <Can I="create" a="Maintenance">
+                          <DropdownMenuItem onClick={() => setActive({ type: 'maintenance', instrument: ins })}>
+                            <Wrench className="mr-2 size-4" />
+                            Log maintenance
+                          </DropdownMenuItem>
+                        </Can>
+                        <Can I="create" a="Usage">
+                          <DropdownMenuItem onClick={() => setActive({ type: 'usage', instrument: ins })}>
+                            <Activity className="mr-2 size-4" />
+                            Log usage
+                          </DropdownMenuItem>
+                        </Can>
+
+                        <DropdownMenuSeparator />
+
+                        {/* Edit / Delete */}
+                        <Can I="update" a="Instrument">
+                          <DropdownMenuItem onClick={() => setActive({ type: 'edit', instrument: ins })}>
+                            <Pencil className="mr-2 size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        </Can>
+                        <Can I="delete" a="Instrument">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setActive({ type: 'delete', instrument: ins })}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </Can>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -154,20 +235,74 @@ function InstrumentsPage() {
         </Table>
       </div>
 
+      {/* Add instrument dialog */}
       <InstrumentDialog
-        instrument={editing ?? undefined}
-        open={dialogOpen}
-        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditing(null) }}
+        open={addOpen}
+        onOpenChange={setAddOpen}
         onSaved={invalidate}
       />
 
+      {/* Edit instrument dialog */}
+      {active?.type === 'edit' && (
+        <InstrumentDialog
+          instrument={active.instrument}
+          open
+          onOpenChange={(open) => { if (!open) setActive(null) }}
+          onSaved={() => { invalidate(); setActive(null) }}
+        />
+      )}
+
+      {/* Delete confirm */}
       <DeleteConfirmDialog
-        open={!!deleting}
-        onOpenChange={(open) => { if (!open) setDeleting(null) }}
-        title={`Delete "${deleting?.data.naam}"?`}
+        open={active?.type === 'delete'}
+        onOpenChange={(open) => { if (!open) setActive(null) }}
+        title={active?.type === 'delete' ? `Delete "${active.instrument.data.naam}"?` : ''}
         description="This will permanently remove the instrument. This action cannot be undone."
         onConfirm={handleDelete}
       />
+
+      {/* Checkout */}
+      {active?.type === 'checkout' && (
+        <CheckoutDialog
+          instrument={active.instrument}
+          open
+          onOpenChange={(open) => { if (!open) setActive(null) }}
+          onSaved={() => { invalidate(); setActive(null) }}
+        />
+      )}
+
+      {/* Return */}
+      {active?.type === 'return' && (
+        <ReturnDialog
+          instrument={active.instrument}
+          openMovement={active.movement}
+          open
+          onOpenChange={(open) => { if (!open) setActive(null) }}
+          onSaved={() => { invalidate(); setActive(null) }}
+        />
+      )}
+
+      {/* Log maintenance */}
+      {active?.type === 'maintenance' && (
+        <MaintenanceDialog
+          instrumentId={active.instrument.id}
+          instrumentName={active.instrument.data.naam}
+          open
+          onOpenChange={(open) => { if (!open) setActive(null) }}
+          onSaved={() => { setActive(null) }}
+        />
+      )}
+
+      {/* Log usage */}
+      {active?.type === 'usage' && (
+        <UsageEventDialog
+          instrumentId={active.instrument.id}
+          instrumentName={active.instrument.data.naam}
+          open
+          onOpenChange={(open) => { if (!open) setActive(null) }}
+          onSaved={() => { setActive(null) }}
+        />
+      )}
     </div>
   )
 }
