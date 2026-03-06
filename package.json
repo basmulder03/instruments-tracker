@@ -8,9 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "firebase:emulators": "firebase emulators:start",
-    "firebase:emulators:export": "firebase emulators:export ./firebase-data",
-    "firebase:emulators:import": "firebase emulators:start --import=./firebase-data"
+    "firebase:emulators": "firebase emulators:start --import=./firebase-data --export-on-exit=./firebase-data"
   },
   "dependencies": {
     "@casl/ability": "^6.7.1",
