@@ -22,6 +22,7 @@ import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedLocationsIndexRouteImport } from './routes/_authenticated/locations/index'
 import { Route as AuthenticatedInstrumentsIndexRouteImport } from './routes/_authenticated/instruments/index'
 import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated/audit/index'
+import { Route as AuthenticatedAnalyticsIndexRouteImport } from './routes/_authenticated/analytics/index'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
 import { Route as AuthenticatedInstrumentsInstrumentIdRouteImport } from './routes/_authenticated/instruments/$instrumentId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -96,6 +97,12 @@ const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
   path: '/audit/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAnalyticsIndexRoute =
+  AuthenticatedAnalyticsIndexRouteImport.update({
+    id: '/analytics/',
+    path: '/analytics/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAccountIndexRoute =
   AuthenticatedAccountIndexRouteImport.update({
     id: '/account/',
@@ -130,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
+  '/analytics/': typeof AuthenticatedAnalyticsIndexRoute
   '/audit/': typeof AuthenticatedAuditIndexRoute
   '/instruments/': typeof AuthenticatedInstrumentsIndexRoute
   '/locations/': typeof AuthenticatedLocationsIndexRoute
@@ -148,6 +156,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/account': typeof AuthenticatedAccountIndexRoute
+  '/analytics': typeof AuthenticatedAnalyticsIndexRoute
   '/audit': typeof AuthenticatedAuditIndexRoute
   '/instruments': typeof AuthenticatedInstrumentsIndexRoute
   '/locations': typeof AuthenticatedLocationsIndexRoute
@@ -168,6 +177,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/analytics/': typeof AuthenticatedAnalyticsIndexRoute
   '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
   '/_authenticated/instruments/': typeof AuthenticatedInstrumentsIndexRoute
   '/_authenticated/locations/': typeof AuthenticatedLocationsIndexRoute
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/instruments/$instrumentId'
     | '/account/'
+    | '/analytics/'
     | '/audit/'
     | '/instruments/'
     | '/locations/'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/instruments/$instrumentId'
     | '/account'
+    | '/analytics'
     | '/audit'
     | '/instruments'
     | '/locations'
@@ -225,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/instruments/$instrumentId'
     | '/_authenticated/account/'
+    | '/_authenticated/analytics/'
     | '/_authenticated/audit/'
     | '/_authenticated/instruments/'
     | '/_authenticated/locations/'
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/analytics/': {
+      id: '/_authenticated/analytics/'
+      path: '/analytics'
+      fullPath: '/analytics/'
+      preLoaderRoute: typeof AuthenticatedAnalyticsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/account/': {
       id: '/_authenticated/account/'
       path: '/account'
@@ -369,6 +389,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedInstrumentsInstrumentIdRoute: typeof AuthenticatedInstrumentsInstrumentIdRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+  AuthenticatedAnalyticsIndexRoute: typeof AuthenticatedAnalyticsIndexRoute
   AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
   AuthenticatedInstrumentsIndexRoute: typeof AuthenticatedInstrumentsIndexRoute
   AuthenticatedLocationsIndexRoute: typeof AuthenticatedLocationsIndexRoute
@@ -384,6 +405,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInstrumentsInstrumentIdRoute:
     AuthenticatedInstrumentsInstrumentIdRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+  AuthenticatedAnalyticsIndexRoute: AuthenticatedAnalyticsIndexRoute,
   AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedInstrumentsIndexRoute: AuthenticatedInstrumentsIndexRoute,
   AuthenticatedLocationsIndexRoute: AuthenticatedLocationsIndexRoute,
