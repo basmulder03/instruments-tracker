@@ -8,20 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/AuthContext'
 import { signOut } from '@/features/users/services/authService'
 import { useDarkMode } from '@/hooks/useDarkMode'
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
+import { NameAvatar } from '@/components/common/NameAvatar'
 
 export function UserMenu() {
   const { currentUser } = useAuth()
@@ -35,17 +26,13 @@ export function UserMenu() {
 
   if (!currentUser) return null
 
-  const initials = getInitials(currentUser.displayName || currentUser.email)
+  const displayName = currentUser.displayName || currentUser.email
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative size-9 rounded-full p-0">
-          <Avatar className="size-9">
-            <AvatarFallback className="text-xs font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <NameAvatar name={displayName} />
         </Button>
       </DropdownMenuTrigger>
 
