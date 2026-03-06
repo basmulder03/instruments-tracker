@@ -1,0 +1,157 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    function hasPermission(permission) {
+      let userDoc = getUserDoc();
+      let userPermissions = userDoc.data.permissions;
+      
+      // Check for exact permission match
+      if (permission in userPermissions) {
+        return true;
+      }
+      
+      // Check for wildcard permissions
+      let parts = permission.split(':');
+      let resource = parts[0];
+      let action = parts[1];
+      
+      // Check resource:* (e.g., instruments:*)
+      if ((resource + ':*') in userPermissions) {
+        return true;
+      }
+      
+      // Check *:action (e.g., *:read)
+      if (('*:' + action) in userPermissions) {
+        return true;
+      }
+      
+      // Check *:* (superadmin)
+      if ('*:*' in userPermissions) {
+        return true;
+      }
+      
+      return false;
+    }
+    
+    function isAdmin() {
+      return hasPermission('*:*');
+    }
+    
+    // Users collection - users can read their own document, admins can manage all
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || hasPermission('users:read'));
+      allow write: if isAuthenticated() && hasPermission('users:write');
+      allow delete: if isAuthenticated() && hasPermission('users:delete');
+    }
+    
+    // Roles collection - only admins can manage
+    match /roles/{roleId} {
+      allow read: if isAuthenticated() && hasPermission('roles:read');
+      allow write: if isAuthenticated() && hasPermission('roles:write');
+      allow delete: if isAuthenticated() && hasPermission('roles:delete');
+    }
+    
+    // Permissions collection - only admins can manage
+    match /permissions/{permissionId} {
+      allow read: if isAuthenticated() && hasPermission('permissions:read');
+      allow write: if isAuthenticated() && hasPermission('permissions:write');
+      allow delete: if isAuthenticated() && hasPermission('permissions:delete');
+    }
+    
+    // Invitations collection
+    match /invitations/{invitationId} {
+      allow read: if isAuthenticated() && hasPermission('invitations:read');
+      allow write: if isAuthenticated() && hasPermission('invitations:write');
+      allow delete: if isAuthenticated() && hasPermission('invitations:delete');
+    }
+    
+    // Instruments collection
+    match /instruments/{instrumentId} {
+      allow read: if isAuthenticated() && hasPermission('instruments:read');
+      allow create: if isAuthenticated() && hasPermission('instruments:create');
+      allow update: if isAuthenticated() && hasPermission('instruments:update');
+      allow delete: if isAuthenticated() && hasPermission('instruments:delete');
+    }
+    
+    // People collection
+    match /people/{personId} {
+      allow read: if isAuthenticated() && hasPermission('people:read');
+      allow create: if isAuthenticated() && hasPermission('people:create');
+      allow update: if isAuthenticated() && hasPermission('people:update');
+      allow delete: if isAuthenticated() && hasPermission('people:delete');
+    }
+    
+    // Locations collection
+    match /locations/{locationId} {
+      allow read: if isAuthenticated() && hasPermission('locations:read');
+      allow create: if isAuthenticated() && hasPermission('locations:create');
+      allow update: if isAuthenticated() && hasPermission('locations:update');
+      allow delete: if isAuthenticated() && hasPermission('locations:delete');
+    }
+    
+    // Movements collection
+    match /movements/{movementId} {
+      allow read: if isAuthenticated() && hasPermission('movements:read');
+      allow create: if isAuthenticated() && hasPermission('movements:create');
+      allow update: if isAuthenticated() && hasPermission('movements:update');
+      allow delete: if isAuthenticated() && hasPermission('movements:delete');
+    }
+    
+    // Maintenance collection
+    match /maintenance/{maintenanceId} {
+      allow read: if isAuthenticated() && hasPermission('maintenance:read');
+      allow create: if isAuthenticated() && hasPermission('maintenance:create');
+      allow update: if isAuthenticated() && hasPermission('maintenance:update');
+      allow delete: if isAuthenticated() && hasPermission('maintenance:delete');
+    }
+    
+    // Usage events collection
+    match /usage_events/{usageEventId} {
+      allow read: if isAuthenticated() && hasPermission('usage:read');
+      allow create: if isAuthenticated() && hasPermission('usage:create');
+      allow update: if isAuthenticated() && hasPermission('usage:update');
+      allow delete: if isAuthenticated() && hasPermission('usage:delete');
+    }
+    
+    // Usage stats collection
+    match /usage_stats/{usageStatId} {
+      allow read: if isAuthenticated() && hasPermission('analytics:view');
+      allow write: if isAuthenticated() && hasPermission('analytics:rebuild');
+    }
+    
+    // Maintenance predictions collection
+    match /maintenance_predictions/{predictionId} {
+      allow read: if isAuthenticated() && hasPermission('analytics:view');
+      allow write: if isAuthenticated() && hasPermission('analytics:rebuild');
+    }
+    
+    // Depreciation collection
+    match /depreciation/{depreciationId} {
+      allow read: if isAuthenticated() && hasPermission('analytics:view');
+      allow write: if isAuthenticated() && hasPermission('analytics:rebuild');
+    }
+    
+    // Audit log - read-only except for system writes
+    match /audit_log/{auditId} {
+      allow read: if isAuthenticated() && hasPermission('audit:read');
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Audit logs are immutable
+    }
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
