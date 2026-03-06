@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Music, ArrowRightLeft, Wrench, TrendingDown } from 'lucide-react'
+import { Music, ArrowRightLeft, Wrench, TrendingDown, CalendarDays } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -22,6 +22,7 @@ import {
   listDepreciation,
   listUsageStats,
 } from '@/features/analytics/services/analyticsService'
+import { calcAllCheckedOutDays } from '@/features/analytics/services/usageDaysService'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: DashboardPage,
@@ -114,6 +115,18 @@ function DashboardPage() {
   // --- Total usage ---
   const totalUnits = usageStats.reduce((sum, s) => sum + (s.data.unitsTotal ?? 0), 0)
 
+  // --- Most-used instrument by total days checked out ---
+  const daysMap = calcAllCheckedOutDays(movements)
+  let mostUsedName = '—'
+  let mostUsedDays = 0
+  for (const [instrumentId, days] of daysMap.entries()) {
+    if (days > mostUsedDays) {
+      mostUsedDays = days
+      const instr = instruments.find((i) => i.id === instrumentId)
+      mostUsedName = instr?.data.naam ?? instrumentId
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -122,7 +135,7 @@ function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
         <KpiCard
           title={t('dashboard.kpi.totalInstruments')}
           value={totalInstruments}
@@ -146,6 +159,12 @@ function DashboardPage() {
           value={t('dashboard.kpi.usageUnits', { n: totalUnits.toFixed(1) })}
           sub={t('dashboard.kpi.usageSub')}
           icon={Wrench}
+        />
+        <KpiCard
+          title={t('dashboard.kpi.mostUsed')}
+          value={mostUsedName}
+          sub={mostUsedDays > 0 ? t('dashboard.kpi.mostUsedSub', { days: mostUsedDays }) : undefined}
+          icon={CalendarDays}
         />
       </div>
 

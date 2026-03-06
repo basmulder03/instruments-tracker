@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { RefreshCw, TrendingDown, Activity } from 'lucide-react'
+import { RefreshCw, TrendingDown, Activity, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -27,6 +27,8 @@ import {
   rebuildUsageStats,
 } from '@/features/analytics/services/analyticsService'
 import { listInstruments } from '@/features/instruments/services/instrumentService'
+import { listMovements } from '@/features/operations/services/movementService'
+import { calcAllCheckedOutDays } from '@/features/analytics/services/usageDaysService'
 
 export const Route = createFileRoute('/_authenticated/analytics/')({
   component: AnalyticsPage,
@@ -70,6 +72,11 @@ function AnalyticsPage() {
     queryFn: listUsageStats,
   })
 
+  const { data: movements = [] } = useQuery({
+    queryKey: ['movements'],
+    queryFn: listMovements,
+  })
+
   // Build a name map for instruments
   const nameMap = Object.fromEntries(instruments.map((i) => [i.id, i.data.naam]))
 
@@ -97,6 +104,22 @@ function AnalyticsPage() {
   const statsRows = usageStats
     .map((s) => ({ ...s, naam: nameMap[s.id] ?? s.id }))
     .sort((a, b) => a.naam.localeCompare(b.naam))
+
+  // Days-checked-out per instrument (derived from movements, no rebuild needed)
+  const daysMap = calcAllCheckedOutDays(movements)
+  const daysRows = Array.from(daysMap.entries())
+    .map(([instrumentId, totalDays]) => {
+      // Average days per checkout
+      const checkoutCount = movements.filter((m) => m.data.instrumentId === instrumentId).length
+      return {
+        instrumentId,
+        naam: nameMap[instrumentId] ?? instrumentId,
+        totalDays,
+        checkoutCount,
+        avgDays: checkoutCount > 0 ? Math.round(totalDays / checkoutCount) : 0,
+      }
+    })
+    .sort((a, b) => b.totalDays - a.totalDays)
 
   // ---------------------------------------------------------------------------
   // Rebuild mutation
@@ -272,6 +295,57 @@ function AnalyticsPage() {
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-muted-foreground">
                         {round2(row.data.unitsPerWeek)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Usage by days checked out */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <div>
+              <CardTitle className="text-base">{t('analytics.days.title')}</CardTitle>
+              <CardDescription>{t('analytics.days.description')}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="rounded-b-md border-t">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('analytics.days.col.instrument')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.days.col.totalDays')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.days.col.checkouts')}</TableHead>
+                  <TableHead className="text-right">{t('analytics.days.col.avgDays')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {daysRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      {t('analytics.days.empty')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  daysRows.map((row) => (
+                    <TableRow key={row.instrumentId}>
+                      <TableCell className="font-medium">{row.naam}</TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold">
+                        {row.totalDays}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {row.checkoutCount}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {row.avgDays}
                       </TableCell>
                     </TableRow>
                   ))

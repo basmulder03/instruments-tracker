@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, LogIn, LogOut, Wrench, Activity } from 'lucide-react'
+import { ArrowLeft, LogIn, LogOut, Wrench, Activity, CalendarDays } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getInstrumentTimeline } from '@/features/history/services/historyService'
 import { listInstruments } from '@/features/instruments/services/instrumentService'
+import { listMovementsForInstrument } from '@/features/operations/services/movementService'
+import { calcCheckedOutDays } from '@/features/analytics/services/usageDaysService'
 import { format, parseISO } from 'date-fns'
 
 export const Route = createFileRoute('/_authenticated/instruments/$instrumentId')({
@@ -51,6 +53,14 @@ function InstrumentHistoryPage() {
     enabled: !!instrumentId,
   })
 
+  const { data: movements = [] } = useQuery({
+    queryKey: ['movements', instrumentId],
+    queryFn: () => listMovementsForInstrument(instrumentId),
+    enabled: !!instrumentId,
+  })
+
+  const totalDaysOut = calcCheckedOutDays(movements)
+
   const KIND_LABEL: Record<string, string> = {
     checkout: t('instrumentHistory.kind.checkout'),
     return: t('instrumentHistory.kind.return'),
@@ -75,7 +85,7 @@ function InstrumentHistoryPage() {
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">
             {instrument ? instrument.data.naam : instrumentId}
           </h1>
@@ -89,6 +99,13 @@ function InstrumentHistoryPage() {
             </p>
           )}
         </div>
+        {totalDaysOut > 0 && (
+          <div className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm">
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <span className="font-semibold">{totalDaysOut}</span>
+            <span className="text-muted-foreground">{t('instrumentHistory.daysOut')}</span>
+          </div>
+        )}
       </div>
 
       {/* Timeline */}
