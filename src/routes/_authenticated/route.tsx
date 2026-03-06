@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { auth } from '@/config/firebase'
+import { AppShell } from '@/components/layout/AppShell'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: () => {
@@ -7,5 +8,5 @@ export const Route = createFileRoute('/_authenticated')({
       throw redirect({ to: '/auth/login' })
     }
   },
-  component: () => <Outlet />,
+  component: AppShell,
 })

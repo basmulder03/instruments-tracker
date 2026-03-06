@@ -41,7 +41,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fbUser) {
         const userSnap = await getDoc(doc(db, 'users', fbUser.uid));
         if (userSnap.exists()) {
-          setCurrentUser(userSnap.data() as User);
+          const userData = userSnap.data() as User;
+          setCurrentUser(userData);
+
+          // Sync theme preference from Firestore to localStorage + <html>
+          const theme = userData.preferences?.theme;
+          if (theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+              document.documentElement.classList.add('dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+            }
+          }
 
           // Update lastLoginAt on each sign-in
           updateDoc(doc(db, 'users', fbUser.uid), {
