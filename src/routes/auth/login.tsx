@@ -1,14 +1,15 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { signIn, resetPassword } from '@/features/users/services/authService'
+import { signIn, resetPassword, hasAdminUser } from '@/features/users/services/authService'
 
 export const Route = createFileRoute('/auth/login')({
   component: LoginPage,
@@ -20,6 +21,22 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+
+  // Check once whether the first admin account exists.
+  // staleTime: Infinity — this value flips exactly once (false → true) and
+  // never reverts, so there's no need to ever re-fetch within a session.
+  const { data: adminExists, isLoading: adminChecking } = useQuery({
+    queryKey: ['bootstrap', 'adminExists'],
+    queryFn: hasAdminUser,
+    staleTime: Infinity,
+  })
+
+  // Auto-redirect to the registration page when no admin exists yet.
+  useEffect(() => {
+    if (!adminChecking && adminExists === false) {
+      navigate({ to: '/auth/register' })
+    }
+  }, [adminExists, adminChecking, navigate])
 
   const loginSchema = z.object({
     email: z.string().email(t('auth.login.validEmail')),
@@ -153,12 +170,6 @@ function LoginPage() {
           >
             {isResetting ? t('auth.login.sendingReset') : t('auth.login.forgotPassword')}
           </button>
-          <Link
-            to="/auth/register"
-            className="text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-          >
-            {t('auth.login.noAccount')}
-          </Link>
         </div>
       </CardContent>
     </Card>
