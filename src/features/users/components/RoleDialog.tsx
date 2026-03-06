@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { createRole, updateRole } from '@/features/users/services/roleService'
 import type { RoleWithId } from '@/features/users/services/roleService'
@@ -107,7 +108,8 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
           className="flex flex-col min-h-0 flex-1"
         >
           {/* Scrollable body */}
-          <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
+          <ScrollArea className="flex-1 min-h-0 pr-3">
+            <div className="flex flex-col gap-4">
             {error && (
               <Alert variant="destructive" className="text-sm">
                 {error}
@@ -204,7 +206,8 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
                 )
               }}
             </form.Field>
-          </div>
+            </div>
+          </ScrollArea>
 
           {/* Pinned footer */}
           <DialogFooter className="pt-4 shrink-0">
