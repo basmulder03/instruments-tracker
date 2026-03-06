@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal, History } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal, History, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,7 @@ import { ReturnDialog } from '@/features/operations/components/ReturnDialog'
 import { MaintenanceDialog } from '@/features/operations/components/MaintenanceDialog'
 import { UsageEventDialog } from '@/features/operations/components/UsageEventDialog'
 import type { MovementWithId } from '@/features/operations/services/movementService'
+import { downloadCsv } from '@/lib/csvExport'
 
 export const Route = createFileRoute('/_authenticated/instruments/')({
   component: InstrumentsPage,
@@ -86,6 +87,24 @@ function InstrumentsPage() {
     queryClient.invalidateQueries({ queryKey: ['movements'] })
   }
 
+  function handleExport() {
+    const headers = ['ID', 'Name', 'Type', 'Brand', 'Serial', 'Status', 'Purchase date', 'Purchase cost', 'Useful life (yrs)', 'Salvage value', 'Notes']
+    const rows = instruments.map((i) => [
+      i.id,
+      i.data.naam,
+      i.data.type,
+      i.data.merk,
+      i.data.serienummer,
+      i.data.currentStatus,
+      i.data.purchaseDate,
+      i.data.purchaseCost,
+      i.data.usefulLifeYears,
+      i.data.salvageValue,
+      i.data.notes,
+    ])
+    downloadCsv('instruments.csv', [headers, ...rows])
+  }
+
   async function handleDelete() {
     if (active?.type !== 'delete') return
     await deleteInstrument(active.instrument.id)
@@ -113,12 +132,18 @@ function InstrumentsPage() {
             Manage the instrument inventory.
           </p>
         </div>
-        <Can I="create" a="Instrument">
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="mr-2 size-4" />
-            Add instrument
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={instruments.length === 0}>
+            <Download className="mr-2 size-4" />
+            Export CSV
           </Button>
-        </Can>
+          <Can I="create" a="Instrument">
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-2 size-4" />
+              Add instrument
+            </Button>
+          </Can>
+        </div>
       </div>
 
       <div className="relative max-w-sm">

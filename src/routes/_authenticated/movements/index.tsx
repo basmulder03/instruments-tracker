@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Search, History } from 'lucide-react'
+import { Search, History, Download } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,7 @@ import { listInstruments } from '@/features/instruments/services/instrumentServi
 import { listPeople } from '@/features/people/services/personService'
 import { listLocations } from '@/features/locations/services/locationService'
 import { format, parseISO } from 'date-fns'
+import { downloadCsv } from '@/lib/csvExport'
 
 export const Route = createFileRoute('/_authenticated/movements/')({
   component: MovementsPage,
@@ -49,13 +50,35 @@ function MovementsPage() {
     )
   })
 
+  function handleExport() {
+    const headers = ['ID', 'Instrument', 'Person', 'Checkout location', 'Checked out', 'Return location', 'Returned', 'Status', 'Notes']
+    const rows = movements.map((m) => [
+      m.id,
+      instrMap[m.data.instrumentId] ?? m.data.instrumentId,
+      personMap[m.data.checkoutPersonId] ?? m.data.checkoutPersonId,
+      locationMap[m.data.checkoutLocationId] ?? m.data.checkoutLocationId,
+      m.data.checkoutAt,
+      m.data.returnLocationId ? (locationMap[m.data.returnLocationId] ?? m.data.returnLocationId) : '',
+      m.data.returnAt ?? '',
+      m.data.status,
+      m.data.notes,
+    ])
+    downloadCsv('movements.csv', [headers, ...rows])
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Movements</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          All checkout and return transactions.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Movements</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            All checkout and return transactions.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleExport} disabled={movements.length === 0}>
+          <Download className="mr-2 size-4" />
+          Export CSV
+        </Button>
       </div>
 
       <div className="relative max-w-sm">
