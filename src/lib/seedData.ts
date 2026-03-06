@@ -48,34 +48,37 @@ async function seedRoles(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Checks whether the system data has already been seeded by looking for the
- * `admin` role document.
+ * Checks whether the system data has already been seeded by reading the
+ * publicly-accessible /config/bootstrap sentinel document.
+ * This avoids an authenticated Firestore read on /roles which would fail
+ * before the calling user has permissions in place.
  */
 export async function isSystemSeeded(): Promise<boolean> {
-  const adminRoleSnap = await getDoc(doc(db, 'roles', 'admin'));
-  return adminRoleSnap.exists();
+  const snap = await getDoc(doc(db, 'config', 'bootstrap'));
+  return snap.exists() && snap.data()?.systemSeeded === true;
 }
 
 /**
  * Seeds the `permissions` and `roles` Firestore collections with the
- * predefined system data.
+ * predefined system data, then marks the bootstrap sentinel so subsequent
+ * calls skip the work.
+ *
+ * MUST be called after the admin user doc has been written to Firestore,
+ * so that hasPermission() resolves correctly for the roles/permissions writes.
  *
  * This function is idempotent — it is safe to call multiple times.
- * Existing documents are merged rather than overwritten.
- *
- * Typical call sites:
- *   - First-admin registration flow
- *   - A one-time setup/migration script
  */
 export async function seedSystemData(): Promise<void> {
   await seedPermissions();
   await seedRoles();
+  // Mark seeded in the bootstrap sentinel (merge so adminCreated is preserved)
+  await setDoc(doc(db, 'config', 'bootstrap'), { systemSeeded: true }, { merge: true });
   console.log('[seed] System data seeded successfully.');
 }
 
 /**
  * Conditionally seeds system data only if it has not been seeded yet.
- * Useful on app startup to bootstrap a fresh deployment.
+ * Must be called while an authenticated admin session is active.
  */
 export async function seedSystemDataIfNeeded(): Promise<void> {
   const already = await isSystemSeeded();

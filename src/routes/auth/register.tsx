@@ -51,9 +51,12 @@ function RegisterPage() {
       setError(null)
       try {
         const parsed = registerSchema.parse(value)
-        // Seed system roles/permissions first (idempotent)
-        await seedSystemDataIfNeeded()
+        // Create the admin Auth user + Firestore doc first, so the
+        // subsequent seed writes have a valid authenticated session with
+        // permissions: ['*:*'] already in place.
         await registerFirstAdmin(parsed.email, parsed.password, parsed.displayName)
+        // Seed roles/permissions after auth is established.
+        await seedSystemDataIfNeeded()
         navigate({ to: '/dashboard' })
       } catch (err: unknown) {
         if (err instanceof z.ZodError) {
