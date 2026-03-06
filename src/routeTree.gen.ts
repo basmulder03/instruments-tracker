@@ -17,6 +17,8 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthAcceptInvitationRouteImport } from './routes/auth/accept-invitation'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
 
 const AuthRouteRoute = AuthRouteRouteImport.update({
   id: '/auth',
@@ -58,6 +60,16 @@ const AuthenticatedAccountIndexRoute =
     path: '/account/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRolesRoute = AuthenticatedAdminRolesRouteImport.update({
+  id: '/admin/roles',
+  path: '/admin/roles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +78,8 @@ export interface FileRoutesByFullPath {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesByTo {
@@ -75,6 +89,8 @@ export interface FileRoutesByTo {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/account': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRoutesById {
@@ -86,6 +102,8 @@ export interface FileRoutesById {
   '/auth/accept-invitation': typeof AuthAcceptInvitationRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
 }
 export interface FileRouteTypes {
@@ -97,6 +115,8 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/admin/roles'
+    | '/admin/users'
     | '/account/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/admin/roles'
+    | '/admin/users'
     | '/account'
   id:
     | '__root__'
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/auth/accept-invitation'
     | '/auth/login'
     | '/auth/register'
+    | '/_authenticated/admin/roles'
+    | '/_authenticated/admin/users'
     | '/_authenticated/account/'
   fileRoutesById: FileRoutesById
 }
@@ -183,16 +207,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/roles': {
+      id: '/_authenticated/admin/roles'
+      path: '/admin/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AuthenticatedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
 }
 
