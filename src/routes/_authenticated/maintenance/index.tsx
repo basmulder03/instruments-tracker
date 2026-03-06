@@ -67,7 +67,6 @@ function MaintenancePage() {
     if (key === 'cost') return r.data.cost
     if (key === 'performedAt') return r.data.performedAt ?? ''
     return ''
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instrMap])
 
   const { sortState, sorted, onSort } = useSorting<MaintenanceWithId, SortKey>(

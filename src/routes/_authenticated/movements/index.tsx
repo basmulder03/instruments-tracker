@@ -66,7 +66,6 @@ function MovementsPage() {
     if (key === 'returnAt') return m.data.returnAt ?? ''
     if (key === 'status') return m.data.status
     return ''
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instrMap, personMap])
 
   const { sortState, sorted, onSort } = useSorting<MovementWithId, SortKey>(

@@ -53,7 +53,7 @@ function RolesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editRole, setEditRole] = useState<RoleWithId | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<RoleWithId | null>(null)
-  const [_deleting, setDeleting] = useState(false)
+  const [, setDeleting] = useState(false)
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],

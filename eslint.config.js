@@ -4,6 +4,9 @@ import tseslint from 'typescript-eslint'
 import pluginReact from 'eslint-plugin-react-hooks'
 
 export default [
+  {
+    ignores: ['dist/**', 'functions/lib/**'],
+  },
   { files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
