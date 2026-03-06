@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -206,6 +206,14 @@ function InstrumentsPage() {
                             Log usage
                           </DropdownMenuItem>
                         </Can>
+
+                        {/* View history */}
+                        <DropdownMenuItem asChild>
+                          <Link to="/instruments/$instrumentId" params={{ instrumentId: ins.id }}>
+                            <History className="mr-2 size-4" />
+                            View history
+                          </Link>
+                        </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
 

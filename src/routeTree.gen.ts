@@ -17,9 +17,13 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthAcceptInvitationRouteImport } from './routes/auth/accept-invitation'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
+import { Route as AuthenticatedMovementsIndexRouteImport } from './routes/_authenticated/movements/index'
+import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_authenticated/maintenance/index'
 import { Route as AuthenticatedLocationsIndexRouteImport } from './routes/_authenticated/locations/index'
 import { Route as AuthenticatedInstrumentsIndexRouteImport } from './routes/_authenticated/instruments/index'
+import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated/audit/index'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
+import { Route as AuthenticatedInstrumentsInstrumentIdRouteImport } from './routes/_authenticated/instruments/$instrumentId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminRolesRouteImport } from './routes/_authenticated/admin/roles'
 
@@ -63,6 +67,18 @@ const AuthenticatedPeopleIndexRoute =
     path: '/people/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMovementsIndexRoute =
+  AuthenticatedMovementsIndexRouteImport.update({
+    id: '/movements/',
+    path: '/movements/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMaintenanceIndexRoute =
+  AuthenticatedMaintenanceIndexRouteImport.update({
+    id: '/maintenance/',
+    path: '/maintenance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLocationsIndexRoute =
   AuthenticatedLocationsIndexRouteImport.update({
     id: '/locations/',
@@ -75,10 +91,21 @@ const AuthenticatedInstrumentsIndexRoute =
     path: '/instruments/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAccountIndexRoute =
   AuthenticatedAccountIndexRouteImport.update({
     id: '/account/',
     path: '/account/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInstrumentsInstrumentIdRoute =
+  AuthenticatedInstrumentsInstrumentIdRouteImport.update({
+    id: '/instruments/$instrumentId',
+    path: '/instruments/$instrumentId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
@@ -101,9 +128,13 @@ export interface FileRoutesByFullPath {
   '/auth/register': typeof AuthRegisterRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/account/': typeof AuthenticatedAccountIndexRoute
+  '/audit/': typeof AuthenticatedAuditIndexRoute
   '/instruments/': typeof AuthenticatedInstrumentsIndexRoute
   '/locations/': typeof AuthenticatedLocationsIndexRoute
+  '/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
+  '/movements/': typeof AuthenticatedMovementsIndexRoute
   '/people/': typeof AuthenticatedPeopleIndexRoute
 }
 export interface FileRoutesByTo {
@@ -115,9 +146,13 @@ export interface FileRoutesByTo {
   '/auth/register': typeof AuthRegisterRoute
   '/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/account': typeof AuthenticatedAccountIndexRoute
+  '/audit': typeof AuthenticatedAuditIndexRoute
   '/instruments': typeof AuthenticatedInstrumentsIndexRoute
   '/locations': typeof AuthenticatedLocationsIndexRoute
+  '/maintenance': typeof AuthenticatedMaintenanceIndexRoute
+  '/movements': typeof AuthenticatedMovementsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
 }
 export interface FileRoutesById {
@@ -131,9 +166,13 @@ export interface FileRoutesById {
   '/auth/register': typeof AuthRegisterRoute
   '/_authenticated/admin/roles': typeof AuthenticatedAdminRolesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/instruments/$instrumentId': typeof AuthenticatedInstrumentsInstrumentIdRoute
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
   '/_authenticated/instruments/': typeof AuthenticatedInstrumentsIndexRoute
   '/_authenticated/locations/': typeof AuthenticatedLocationsIndexRoute
+  '/_authenticated/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
+  '/_authenticated/movements/': typeof AuthenticatedMovementsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
 }
 export interface FileRouteTypes {
@@ -147,9 +186,13 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/admin/roles'
     | '/admin/users'
+    | '/instruments/$instrumentId'
     | '/account/'
+    | '/audit/'
     | '/instruments/'
     | '/locations/'
+    | '/maintenance/'
+    | '/movements/'
     | '/people/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -161,9 +204,13 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/admin/roles'
     | '/admin/users'
+    | '/instruments/$instrumentId'
     | '/account'
+    | '/audit'
     | '/instruments'
     | '/locations'
+    | '/maintenance'
+    | '/movements'
     | '/people'
   id:
     | '__root__'
@@ -176,9 +223,13 @@ export interface FileRouteTypes {
     | '/auth/register'
     | '/_authenticated/admin/roles'
     | '/_authenticated/admin/users'
+    | '/_authenticated/instruments/$instrumentId'
     | '/_authenticated/account/'
+    | '/_authenticated/audit/'
     | '/_authenticated/instruments/'
     | '/_authenticated/locations/'
+    | '/_authenticated/maintenance/'
+    | '/_authenticated/movements/'
     | '/_authenticated/people/'
   fileRoutesById: FileRoutesById
 }
@@ -246,6 +297,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/movements/': {
+      id: '/_authenticated/movements/'
+      path: '/movements'
+      fullPath: '/movements/'
+      preLoaderRoute: typeof AuthenticatedMovementsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maintenance/': {
+      id: '/_authenticated/maintenance/'
+      path: '/maintenance'
+      fullPath: '/maintenance/'
+      preLoaderRoute: typeof AuthenticatedMaintenanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/locations/': {
       id: '/_authenticated/locations/'
       path: '/locations'
@@ -260,11 +325,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInstrumentsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/audit/': {
+      id: '/_authenticated/audit/'
+      path: '/audit'
+      fullPath: '/audit/'
+      preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/account/': {
       id: '/_authenticated/account/'
       path: '/account'
       fullPath: '/account/'
       preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/instruments/$instrumentId': {
+      id: '/_authenticated/instruments/$instrumentId'
+      path: '/instruments/$instrumentId'
+      fullPath: '/instruments/$instrumentId'
+      preLoaderRoute: typeof AuthenticatedInstrumentsInstrumentIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/users': {
@@ -288,9 +367,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedAdminRolesRoute: typeof AuthenticatedAdminRolesRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedInstrumentsInstrumentIdRoute: typeof AuthenticatedInstrumentsInstrumentIdRoute
   AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+  AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
   AuthenticatedInstrumentsIndexRoute: typeof AuthenticatedInstrumentsIndexRoute
   AuthenticatedLocationsIndexRoute: typeof AuthenticatedLocationsIndexRoute
+  AuthenticatedMaintenanceIndexRoute: typeof AuthenticatedMaintenanceIndexRoute
+  AuthenticatedMovementsIndexRoute: typeof AuthenticatedMovementsIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
 }
 
@@ -298,9 +381,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedAdminRolesRoute: AuthenticatedAdminRolesRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedInstrumentsInstrumentIdRoute:
+    AuthenticatedInstrumentsInstrumentIdRoute,
   AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+  AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedInstrumentsIndexRoute: AuthenticatedInstrumentsIndexRoute,
   AuthenticatedLocationsIndexRoute: AuthenticatedLocationsIndexRoute,
+  AuthenticatedMaintenanceIndexRoute: AuthenticatedMaintenanceIndexRoute,
+  AuthenticatedMovementsIndexRoute: AuthenticatedMovementsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
 }
 
