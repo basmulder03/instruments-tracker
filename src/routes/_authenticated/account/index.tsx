@@ -13,6 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export const Route = createFileRoute('/_authenticated/account/')({
   component: AccountSettingsPage,
@@ -258,15 +265,18 @@ function PreferencesSection() {
           {(field) => (
             <div className="space-y-2">
               <Label htmlFor="theme">Theme</Label>
-              <select
-                id="theme"
+              <Select
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value as 'light' | 'dark')}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                onValueChange={(v) => field.handleChange(v as 'light' | 'dark')}
               >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
+                <SelectTrigger id="theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
         </form.Field>
@@ -275,15 +285,18 @@ function PreferencesSection() {
           {(field) => (
             <div className="space-y-2">
               <Label htmlFor="language">Language</Label>
-              <select
-                id="language"
+              <Select
                 value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value as 'en' | 'nl')}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                onValueChange={(v) => field.handleChange(v as 'en' | 'nl')}
               >
-                <option value="en">English</option>
-                <option value="nl">Nederlands</option>
-              </select>
+                <SelectTrigger id="language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="nl">Nederlands</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
         </form.Field>
