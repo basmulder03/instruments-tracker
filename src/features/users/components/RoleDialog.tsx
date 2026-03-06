@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert } from '@/components/ui/alert'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { createRole, updateRole } from '@/features/users/services/roleService'
@@ -105,77 +104,78 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
             e.preventDefault()
             form.handleSubmit()
           }}
-          className="flex flex-col gap-4 overflow-hidden"
+          className="flex flex-col min-h-0 flex-1"
         >
-          {error && (
-            <Alert variant="destructive" className="text-sm shrink-0">
-              {error}
-            </Alert>
-          )}
-
-          {/* Name */}
-          <form.Field name="name">
-            {(field) => (
-              <div className="space-y-1.5 shrink-0">
-                <Label>{t('roleDialog.name')}</Label>
-                <Input
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder={t('roleDialog.namePlaceholder')}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
-                )}
-              </div>
+          {/* Scrollable body */}
+          <div className="flex flex-col gap-4 overflow-y-auto flex-1 pr-1">
+            {error && (
+              <Alert variant="destructive" className="text-sm">
+                {error}
+              </Alert>
             )}
-          </form.Field>
 
-          {/* Description */}
-          <form.Field name="description">
-            {(field) => (
-              <div className="space-y-1.5 shrink-0">
-                <Label>{t('roleDialog.description')}</Label>
-                <Textarea
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder={t('roleDialog.descriptionPlaceholder')}
-                  rows={2}
-                />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
-                )}
-              </div>
-            )}
-          </form.Field>
-
-          {/* Permission matrix */}
-          <form.Field name="permissions">
-            {(field) => {
-              const selected = new Set(field.state.value)
-
-              function toggle(permId: string) {
-                const next = new Set(selected)
-                if (next.has(permId)) {
-                  next.delete(permId)
-                } else {
-                  next.add(permId)
-                }
-                field.handleChange(Array.from(next))
-              }
-
-              return (
-                <div className="space-y-1.5 overflow-hidden flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <Label>{t('roleDialog.permissions')}</Label>
-                    <Badge variant="secondary" className="text-xs">
-                      {selected.size}
-                    </Badge>
-                  </div>
+            {/* Name */}
+            <form.Field name="name">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>{t('roleDialog.name')}</Label>
+                  <Input
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder={t('roleDialog.namePlaceholder')}
+                  />
                   {field.state.meta.errors.length > 0 && (
                     <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
                   )}
-                  <ScrollArea className="flex-1 rounded-md border p-3 h-56">
-                    <div className="space-y-4">
+                </div>
+              )}
+            </form.Field>
+
+            {/* Description */}
+            <form.Field name="description">
+              {(field) => (
+                <div className="space-y-1.5">
+                  <Label>{t('roleDialog.description')}</Label>
+                  <Textarea
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder={t('roleDialog.descriptionPlaceholder')}
+                    rows={2}
+                  />
+                  {field.state.meta.errors.length > 0 && (
+                    <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                  )}
+                </div>
+              )}
+            </form.Field>
+
+            {/* Permission matrix */}
+            <form.Field name="permissions">
+              {(field) => {
+                const selected = new Set(field.state.value)
+
+                function toggle(permId: string) {
+                  const next = new Set(selected)
+                  if (next.has(permId)) {
+                    next.delete(permId)
+                  } else {
+                    next.add(permId)
+                  }
+                  field.handleChange(Array.from(next))
+                }
+
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Label>{t('roleDialog.permissions')}</Label>
+                      <Badge variant="secondary" className="text-xs">
+                        {selected.size}
+                      </Badge>
+                    </div>
+                    {field.state.meta.errors.length > 0 && (
+                      <p className="text-xs text-destructive">{field.state.meta.errors[0]}</p>
+                    )}
+                    <div className="rounded-md border p-3 space-y-4">
                       {PERMISSION_GROUPS.map(([category, perms]) => (
                         <div key={category}>
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
@@ -200,13 +200,14 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
                         </div>
                       ))}
                     </div>
-                  </ScrollArea>
-                </div>
-              )
-            }}
-          </form.Field>
+                  </div>
+                )
+              }}
+            </form.Field>
+          </div>
 
-          <DialogFooter className="shrink-0">
+          {/* Pinned footer */}
+          <DialogFooter className="pt-4 shrink-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
