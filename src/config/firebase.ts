@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, connectAuthEmulator } from 'firebase/auth'
+import { getAuth, connectAuthEmulator, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -32,3 +32,15 @@ if (useEmulators) {
 }
 
 export default app
+
+/**
+ * Resolves once Firebase Auth has finished restoring the persisted session
+ * (or confirmed there is none). Await this before making auth-gated routing
+ * decisions to avoid spurious redirects on hard refresh.
+ */
+export const authReady: Promise<void> = new Promise((resolve) => {
+  const unsubscribe = onAuthStateChanged(auth, () => {
+    unsubscribe()
+    resolve()
+  })
+})

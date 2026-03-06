@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import { auth } from '@/config/firebase'
+import { auth, authReady } from '@/config/firebase'
 
 export const Route = createFileRoute('/auth')({
-  beforeLoad: () => {
+  beforeLoad: async () => {
     // If already authenticated, skip the auth pages entirely
+    await authReady
     if (auth.currentUser) {
       throw redirect({ to: '/dashboard' })
     }
