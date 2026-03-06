@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,9 +28,23 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { updateUserRoleAndPermissions, setUserStatus } from '@/features/users/services/userService'
-import { SYSTEM_ROLES } from '@/lib/roles'
 import { SYSTEM_PERMISSIONS } from '@/lib/permissions'
 import type { UserWithId } from '@/features/users/services/userService'
+import type { Role } from '@/lib/types/users'
+
+interface RoleOption {
+  id: string
+  name: string
+  permissions: string[]
+}
+
+async function listAllRoles(): Promise<RoleOption[]> {
+  const snap = await getDocs(query(collection(db, 'roles'), orderBy('name')))
+  return snap.docs.map((d) => {
+    const data = d.data() as Role
+    return { id: d.id, name: data.name, permissions: data.permissions }
+  })
+}
 
 // Group permissions by category for the matrix UI
 const PERMISSION_GROUPS = Array.from(
@@ -49,6 +66,11 @@ interface EditUserDialogProps {
 export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDialogProps) {
   const { t } = useTranslation()
   const [error, setError] = useState<string | null>(null)
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: listAllRoles,
+  })
 
   const schema = z.object({
     role: z.string().min(1, t('editUserDialog.validRole')),
@@ -99,9 +121,9 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
   // When role changes, preset permissions to the role defaults
   function handleRoleChange(role: string, fieldChange: (v: string) => void, permChange: (v: string[]) => void) {
     fieldChange(role)
-    const roleData = SYSTEM_ROLES.find((r) => r.id === role)
+    const roleData = roles.find((r) => r.id === role)
     if (roleData) {
-      permChange(roleData.data.permissions)
+      permChange(roleData.permissions)
     }
   }
 
@@ -149,9 +171,9 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {SYSTEM_ROLES.map((r) => (
+                          {roles.map((r) => (
                             <SelectItem key={r.id} value={r.id}>
-                              {r.data.name}
+                              {r.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

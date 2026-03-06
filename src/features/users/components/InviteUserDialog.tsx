@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
+import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,8 +28,18 @@ import {
 } from '@/components/ui/select'
 import { Alert } from '@/components/ui/alert'
 import { inviteUser } from '@/features/users/services/invitationService'
-import { SYSTEM_ROLES } from '@/lib/roles'
 import { useAuth } from '@/contexts/AuthContext'
+import type { Role } from '@/lib/types/users'
+
+interface RoleOption {
+  id: string
+  name: string
+}
+
+async function listAllRoles(): Promise<RoleOption[]> {
+  const snap = await getDocs(query(collection(db, 'roles'), orderBy('name')))
+  return snap.docs.map((d) => ({ id: d.id, name: (d.data() as Role).name }))
+}
 
 interface InviteUserDialogProps {
   onInvited?: () => void
@@ -37,6 +50,11 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
   const { firebaseUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: listAllRoles,
+  })
 
   const schema = z.object({
     email: z.string().email(t('inviteDialog.validEmail')),
@@ -142,10 +160,10 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
                     <SelectTrigger>
                       <SelectValue placeholder={t('inviteDialog.rolePlaceholder')} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {SYSTEM_ROLES.map((r) => (
+                     <SelectContent>
+                      {roles.map((r) => (
                         <SelectItem key={r.id} value={r.id}>
-                          {r.data.name}
+                          {r.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
