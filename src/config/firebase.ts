@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getStorage, connectStorageEmulator } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,6 +18,7 @@ const app = initializeApp(firebaseConfig)
 // Initialize Firebase services
 export const auth = getAuth(app)
 export const db = getFirestore(app)
+export const storage = getStorage(app)
 
 // Connect to emulators if in development
 const useEmulators = import.meta.env.VITE_USE_EMULATORS === 'true'
@@ -29,6 +31,9 @@ if (useEmulators) {
   
   // Connect to Firestore Emulator
   connectFirestoreEmulator(db, 'localhost', 8080)
+
+  // Connect to Storage Emulator
+  connectStorageEmulator(storage, 'localhost', 9199)
 }
 
 export default app

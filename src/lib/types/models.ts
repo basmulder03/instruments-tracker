@@ -23,6 +23,9 @@ export interface Instrument {
   currentLocationId: string;      // Reference to locations collection
   currentPersonId: string;        // Reference to people collection (if checked out)
 
+  // Media
+  photoUrl?: string;              // Firebase Storage download URL for instrument photo
+
   // Metadata
   notes: string;
   organizationId?: string;
@@ -82,6 +85,9 @@ export interface Maintenance {
   cost: number;
   isMajor: boolean;
   performedAt: string;            // ISO date
+
+  // Media
+  damagePhotoUrls?: string[];     // Firebase Storage download URLs for damage photos
 
   notes: string;
   organizationId?: string;

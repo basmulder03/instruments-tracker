@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -28,6 +28,10 @@ import {
   type InstrumentInput,
   type InstrumentWithId,
 } from '@/features/instruments/services/instrumentService'
+import {
+  uploadInstrumentPhoto,
+  deleteStorageFile,
+} from '@/features/storage/storageService'
 import { useAuth } from '@/contexts/AuthContext'
 
 type FormValues = {
@@ -78,6 +82,14 @@ export function InstrumentDialog({
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!instrument
 
+  // Photo upload state (managed outside TanStack Form)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    instrument?.data.photoUrl ?? null,
+  )
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   // Schema defined inside component so t() is ready
   const schema = z.object({
     naam: z.string().min(1, t('instrumentDialog.validName')),
@@ -102,17 +114,36 @@ export function InstrumentDialog({
       setError(null)
       try {
         const parsed = schema.parse(value)
+
         // Enforce: new instruments always start IN_STORAGE with no person assigned.
-        // Checked-out instruments retain their status unchanged (read-only in UI).
         const input: InstrumentInput = {
           ...parsed,
           ...(isEdit ? {} : { currentStatus: 'IN_STORAGE', currentPersonId: '' }),
         }
+
+        let savedId: string
         if (isEdit) {
           await updateInstrument(instrument.id, input)
+          savedId = instrument.id
         } else {
-          await createInstrument(input, firebaseUser!.uid)
+          savedId = await createInstrument(input, firebaseUser!.uid)
         }
+
+        // Upload photo after saving so we have the document ID.
+        if (photoFile) {
+          setPhotoUploading(true)
+          try {
+            // Delete old photo if replacing
+            if (isEdit && instrument.data.photoUrl) {
+              await deleteStorageFile(instrument.data.photoUrl).catch(() => {/* ignore */})
+            }
+            const url = await uploadInstrumentPhoto(savedId, photoFile)
+            await updateInstrument(savedId, { photoUrl: url })
+          } finally {
+            setPhotoUploading(false)
+          }
+        }
+
         toast.success(isEdit ? t('instrumentDialog.toastUpdated') : t('instrumentDialog.toastAdded'))
         onSaved?.()
         onOpenChange(false)
@@ -123,6 +154,20 @@ export function InstrumentDialog({
       }
     },
   })
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    const url = URL.createObjectURL(file)
+    setPhotoPreview(url)
+  }
+
+  function handleRemovePhoto() {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   function field(
     name: keyof FormValues,
@@ -237,14 +282,61 @@ export function InstrumentDialog({
             <Textarea rows={3} value={v as string} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} />
           ))}
 
+          {/* Photo upload */}
+          <div className="space-y-2">
+            <Label>{t('instrumentDialog.photo')}</Label>
+            {photoPreview ? (
+              <div className="relative w-32 h-32">
+                <img
+                  src={photoPreview}
+                  alt={t('instrumentDialog.photoPreviewAlt')}
+                  className="w-32 h-32 object-cover rounded-md border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full text-xs"
+                  onClick={handleRemovePhoto}
+                  aria-label={t('instrumentDialog.photoRemove')}
+                >
+                  ×
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('instrumentDialog.photoEmpty')}</p>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+              id="instrument-photo-input"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {photoPreview
+                ? t('instrumentDialog.photoChange')
+                : t('instrumentDialog.photoSelect')}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {t('instrumentDialog.photoHint')}
+            </p>
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
             <form.Subscribe selector={(s) => s.isSubmitting}>
               {(submitting) => (
-                <Button type="submit" disabled={submitting}>
-                  {submitting
+                <Button type="submit" disabled={submitting || photoUploading}>
+                  {submitting || photoUploading
                     ? t('instrumentDialog.submitting')
                     : isEdit
                       ? t('instrumentDialog.submitEdit')
