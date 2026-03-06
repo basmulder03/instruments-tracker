@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2 } from 'lucide-react'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { toast } from 'sonner'
 import { db } from '@/config/firebase'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -17,7 +19,11 @@ import {
 } from '@/components/ui/table'
 import type { Role } from '@/lib/types/users'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
 import { usePagination } from '@/hooks/usePagination'
+import { Can, useAbility } from '@/contexts/AbilityContext'
+import { RoleDialog } from '@/features/users/components/RoleDialog'
+import { deleteRole } from '@/features/users/services/roleService'
 
 export const Route = createFileRoute('/_authenticated/admin/roles')({
   component: RolesPage,
@@ -37,7 +43,13 @@ async function listRoles(): Promise<RoleWithId[]> {
 
 function RolesPage() {
   const { t } = useTranslation()
+  const ability = useAbility()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editRole, setEditRole] = useState<RoleWithId | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<RoleWithId | null>(null)
+  const [_deleting, setDeleting] = useState(false)
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
@@ -54,13 +66,41 @@ function RolesPage() {
 
   const { paged, PaginationBar } = usePagination(filtered)
 
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: ['roles'] })
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await deleteRole(deleteTarget.id)
+      toast.success(t('roles.toast.deleted', { name: deleteTarget.data.name }))
+      invalidate()
+      setDeleteTarget(null)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t('roles.toast.deleteError')
+      toast.error(msg)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{t('roles.title')}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {t('roles.subtitle')}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{t('roles.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {t('roles.subtitle')}
+          </p>
+        </div>
+        <Can I="create" a="Role">
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4 mr-2" />
+            {t('roles.createButton')}
+          </Button>
+        </Can>
       </div>
 
       <div className="relative max-w-sm">
@@ -81,14 +121,17 @@ function RolesPage() {
               <TableHead>{t('roles.col.description')}</TableHead>
               <TableHead>{t('roles.col.permissions')}</TableHead>
               <TableHead>{t('roles.col.type')}</TableHead>
+              {(ability.can('update', 'Role') || ability.can('delete', 'Role')) && (
+                <TableHead className="w-24">{t('common.actions')}</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton cols={4} />
+              <TableSkeleton cols={5} />
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   {search ? t('roles.empty.search') : t('roles.empty.data')}
                 </TableCell>
               </TableRow>
@@ -113,6 +156,34 @@ function RolesPage() {
                       <Badge>{t('roles.badge.custom')}</Badge>
                     )}
                   </TableCell>
+                  {(ability.can('update', 'Role') || ability.can('delete', 'Role')) && (
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Can I="update" a="Role">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={r.data.isSystem}
+                            aria-label={t('roles.editLabel', { name: r.data.name })}
+                            onClick={() => setEditRole(r)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        </Can>
+                        <Can I="delete" a="Role">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={r.data.isSystem}
+                            aria-label={t('roles.deleteLabel', { name: r.data.name })}
+                            onClick={() => setDeleteTarget(r)}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </Can>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
@@ -120,6 +191,34 @@ function RolesPage() {
         </Table>
       </div>
       <PaginationBar />
+
+      {/* Create dialog */}
+      <RoleDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSaved={invalidate}
+      />
+
+      {/* Edit dialog */}
+      {editRole && (
+        <RoleDialog
+          role={editRole}
+          open={editRole !== null}
+          onOpenChange={(open) => { if (!open) setEditRole(null) }}
+          onSaved={() => { invalidate(); setEditRole(null) }}
+        />
+      )}
+
+      {/* Delete confirm */}
+      {deleteTarget && (
+        <DeleteConfirmDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+          title={t('roles.deleteTitle', { name: deleteTarget.data.name })}
+          description={t('roles.deleteDescription')}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   )
 }
