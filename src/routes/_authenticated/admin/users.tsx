@@ -18,6 +18,8 @@ import { listUsers, type UserWithId } from '@/features/users/services/userServic
 import { InviteUserDialog } from '@/features/users/components/InviteUserDialog'
 import { EditUserDialog } from '@/features/users/components/EditUserDialog'
 import { SYSTEM_ROLES_MAP } from '@/lib/roles'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/admin/users')({
   component: UsersPage,
@@ -47,6 +49,8 @@ function UsersPage() {
       u.data.role.toLowerCase().includes(q)
     )
   })
+
+  const { paged, PaginationBar } = usePagination(filtered)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['users'] })
@@ -91,11 +95,7 @@ function UsersPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  Loading…
-                </TableCell>
-              </TableRow>
+              <TableSkeleton cols={5} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
@@ -103,7 +103,7 @@ function UsersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((u) => {
+              paged.map((u) => {
                 const roleName =
                   SYSTEM_ROLES_MAP.get(u.data.role)?.data.name ?? u.data.role
                 return (
@@ -135,6 +135,7 @@ function UsersPage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       {/* Edit dialog */}
       {editing && (

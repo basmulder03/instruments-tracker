@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,6 +21,8 @@ import {
 } from '@/features/locations/services/locationService'
 import { LocationDialog } from '@/features/locations/components/LocationDialog'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/locations/')({
   component: LocationsPage,
@@ -45,13 +48,20 @@ function LocationsPage() {
     )
   })
 
+  const { paged, PaginationBar } = usePagination(filtered)
+
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['locations'] })
   }
 
   async function handleDelete() {
     if (!deleting) return
-    await deleteLocation(deleting.id)
+    try {
+      await deleteLocation(deleting.id)
+      toast.success(`"${deleting.data.naam}" deleted.`)
+    } catch {
+      toast.error('Failed to delete location.')
+    }
     setDeleting(null)
     invalidate()
   }
@@ -96,9 +106,7 @@ function LocationsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={5} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
@@ -106,7 +114,7 @@ function LocationsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((l) => (
+              paged.map((l) => (
                 <TableRow key={l.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{l.id}</TableCell>
                   <TableCell className="font-medium">{l.data.naam}</TableCell>
@@ -132,6 +140,7 @@ function LocationsPage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       <LocationDialog
         location={editing ?? undefined}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -81,10 +82,13 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
         if (parsed.status !== user.data.status) {
           await setUserStatus(user.id, parsed.status)
         }
+        toast.success('User updated.')
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save changes.')
+        const msg = err instanceof Error ? err.message : 'Failed to save changes.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })

@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -88,10 +89,13 @@ export function ReturnDialog({
           firebaseUser!.uid,
           currentUser?.email ?? firebaseUser!.email ?? '',
         )
+        toast.success(`${instrument.data.naam} returned.`)
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to return instrument.')
+        const msg = err instanceof Error ? err.message : 'Failed to return instrument.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })

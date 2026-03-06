@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
 import { UserPlus } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -39,13 +40,11 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
   const { firebaseUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
   const form = useForm({
     defaultValues: { email: '', role: '' },
     onSubmit: async ({ value }) => {
       setError(null)
-      setSuccess(null)
       if (!firebaseUser) return
       try {
         const parsed = schema.parse(value)
@@ -54,21 +53,25 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
           firebaseUser.uid,
         )
         const inviteUrl = `${window.location.origin}/auth/accept-invitation?token=${token}`
-        setSuccess(
-          `Invitation sent for ${value.email} (${invitationId}).\n\nShare this link:\n${inviteUrl}`,
+        toast.success(
+          `Invitation created for ${parsed.email} (${invitationId}). Share the invite link.`,
+          { description: inviteUrl, duration: 10000 },
         )
         form.reset()
         onInvited?.()
+        setOpen(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to send invitation.')
-      }    },
+        const msg = err instanceof Error ? err.message : 'Failed to send invitation.'
+        setError(msg)
+        toast.error(msg)
+      }
+    },
   })
 
   function handleOpenChange(next: boolean) {
     if (!next) {
       form.reset()
       setError(null)
-      setSuccess(null)
     }
     setOpen(next)
   }
@@ -91,15 +94,7 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {success ? (
-          <div className="space-y-4">
-            <Alert className="whitespace-pre-wrap text-sm">{success}</Alert>
-            <DialogFooter>
-              <Button onClick={() => handleOpenChange(false)}>Close</Button>
-            </DialogFooter>
-          </div>
-        ) : (
-          <form
+        <form
             onSubmit={(e) => {
               e.preventDefault()
               form.handleSubmit()
@@ -180,7 +175,6 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
               </form.Subscribe>
             </DialogFooter>
           </form>
-        )}
       </DialogContent>
     </Dialog>
   )

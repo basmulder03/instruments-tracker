@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal, History, Download } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,8 @@ import { MaintenanceDialog } from '@/features/operations/components/MaintenanceD
 import { UsageEventDialog } from '@/features/operations/components/UsageEventDialog'
 import type { MovementWithId } from '@/features/operations/services/movementService'
 import { downloadCsv } from '@/lib/csvExport'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/instruments/')({
   component: InstrumentsPage,
@@ -82,9 +85,23 @@ function InstrumentsPage() {
     )
   })
 
+  const { paged, PaginationBar } = usePagination(filtered)
+
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['instruments'] })
     queryClient.invalidateQueries({ queryKey: ['movements'] })
+  }
+
+  async function handleDelete() {
+    if (active?.type !== 'delete') return
+    try {
+      await deleteInstrument(active.instrument.id)
+      toast.success(`"${active.instrument.data.naam}" deleted.`)
+    } catch {
+      toast.error('Failed to delete instrument.')
+    }
+    setActive(null)
+    invalidate()
   }
 
   function handleExport() {
@@ -103,13 +120,6 @@ function InstrumentsPage() {
       i.data.notes,
     ])
     downloadCsv('instruments.csv', [headers, ...rows])
-  }
-
-  async function handleDelete() {
-    if (active?.type !== 'delete') return
-    await deleteInstrument(active.instrument.id)
-    setActive(null)
-    invalidate()
   }
 
   /** Open the return dialog — need to fetch the open movement first */
@@ -170,9 +180,7 @@ function InstrumentsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={6} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
@@ -180,7 +188,7 @@ function InstrumentsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((ins) => (
+              paged.map((ins) => (
                 <TableRow key={ins.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{ins.id}</TableCell>
                   <TableCell className="font-medium">{ins.data.naam}</TableCell>
@@ -267,6 +275,7 @@ function InstrumentsPage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       {/* Add instrument dialog */}
       <InstrumentDialog

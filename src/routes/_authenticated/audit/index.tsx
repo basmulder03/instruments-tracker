@@ -20,6 +20,8 @@ import {
 } from '@/features/history/services/auditLogService'
 import { format } from 'date-fns'
 import type { Timestamp } from 'firebase/firestore'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/audit/')({
   component: AuditLogPage,
@@ -45,6 +47,8 @@ function AuditLogPage() {
   })
 
   const entries: AuditLogWithId[] = data?.entries ?? []
+
+  const { paged, PaginationBar } = usePagination(entries)
 
   const { mutate: runVerify, isPending: verifying } = useMutation({
     mutationFn: async () => {
@@ -112,15 +116,13 @@ function AuditLogPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={7} />
             ) : entries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No audit entries yet.</TableCell>
               </TableRow>
             ) : (
-              entries.map((entry) => (
+              paged.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{entry.id}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">
@@ -151,6 +153,7 @@ function AuditLogPage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       {data?.lastDoc && (
         <p className="text-xs text-muted-foreground text-center">

@@ -17,6 +17,8 @@ import { listAllMaintenance } from '@/features/operations/services/maintenanceSe
 import { listInstruments } from '@/features/instruments/services/instrumentService'
 import { format, parseISO } from 'date-fns'
 import { downloadCsv } from '@/lib/csvExport'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/maintenance/')({
   component: MaintenancePage,
@@ -51,6 +53,8 @@ function MaintenancePage() {
       (CATEGORY_LABEL[r.data.category] ?? r.data.category).toLowerCase().includes(q)
     )
   })
+
+  const { paged, PaginationBar } = usePagination(filtered)
 
   function handleExport() {
     const headers = ['ID', 'Instrument', 'Category', 'Cost', 'Major', 'Performed', 'Notes']
@@ -107,9 +111,7 @@ function MaintenancePage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={8} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
@@ -117,7 +119,7 @@ function MaintenancePage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((r) => (
+              paged.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{r.id}</TableCell>
                   <TableCell>
@@ -152,6 +154,7 @@ function MaintenancePage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
     </div>
   )
 }

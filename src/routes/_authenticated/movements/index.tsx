@@ -19,6 +19,8 @@ import { listPeople } from '@/features/people/services/personService'
 import { listLocations } from '@/features/locations/services/locationService'
 import { format, parseISO } from 'date-fns'
 import { downloadCsv } from '@/lib/csvExport'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/movements/')({
   component: MovementsPage,
@@ -49,6 +51,8 @@ function MovementsPage() {
       (personMap[m.data.checkoutPersonId] ?? '').toLowerCase().includes(q)
     )
   })
+
+  const { paged, PaginationBar } = usePagination(filtered)
 
   function handleExport() {
     const headers = ['ID', 'Instrument', 'Person', 'Checkout location', 'Checked out', 'Return location', 'Returned', 'Status', 'Notes']
@@ -107,9 +111,7 @@ function MovementsPage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={8} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
@@ -117,7 +119,7 @@ function MovementsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((m) => (
+              paged.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{m.id}</TableCell>
                   <TableCell>
@@ -152,6 +154,7 @@ function MovementsPage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
     </div>
   )
 }

@@ -907,6 +907,131 @@ This document provides a detailed, phase-by-phase plan for implementing the Inst
 
 ---
 
+## Phase 14: Internationalisation / Translations (1-2 days)
+
+**Goal:** Replace all hard-coded UI strings with a JSON-key-value translation system supporting English (`en`) and Dutch (`nl`). The language selection is persisted per-user in Firestore (already part of the account preferences object).
+
+### 14.1 Translation Infrastructure
+
+**Tasks:**
+1. Install `i18next` + `react-i18next` (no heavy framework, minimal footprint):
+   ```bash
+   npm install i18next react-i18next
+   ```
+2. Create `src/i18n/index.ts` — initialises i18next with JSON resources, `fallbackLng: 'en'`, reads `navigator.language` as default.
+3. Create translation files:
+   - `src/i18n/locales/en.json`
+   - `src/i18n/locales/nl.json`
+   Each file is a flat or shallowly-nested key-value map organised by feature area:
+   ```json
+   {
+     "instruments.title": "Instruments",
+     "instruments.addButton": "Add instrument",
+     ...
+   }
+   ```
+4. Bootstrap i18n in `src/main.tsx` (import `'@/i18n'` before rendering).
+
+### 14.2 Wire Translations into Components
+
+**Tasks:**
+1. Replace every hard-coded string in routes, components, and dialogs with `t('key')` calls using the `useTranslation` hook.
+2. Start with high-traffic pages (instruments, movements, maintenance, dashboard) then proceed to dialogs and admin pages.
+3. Keep translation keys co-located by feature prefix (e.g. `instruments.*`, `movements.*`, `nav.*`, `common.*`).
+
+### 14.3 Language Switcher
+
+**Tasks:**
+1. Add a language dropdown to the Account Settings page that calls `i18n.changeLanguage(lang)`.
+2. Persist selected language to `users/{uid}.preferences.language` in Firestore (already in the `User` type).
+3. On app load, read `currentUser.preferences.language` and call `i18n.changeLanguage()` after auth resolves.
+
+**Deliverables:**
+- `en.json` + `nl.json` covering all UI strings
+- All components use `useTranslation` / `t()`
+- Language persisted per user in Firestore
+
+---
+
+## Phase 15: Dynamic Role Creation (1-2 days)
+
+**Goal:** Allow admins to create, edit, and delete custom roles through the UI using a permission-matrix form. System roles (seeded) are read-only.
+
+### 15.1 Role Service
+
+**Tasks:**
+1. Extend `src/features/users/services/userService.ts` (or create `roleService.ts`) with:
+   - `createRole(data: RoleData): Promise<string>`
+   - `updateRole(roleId: string, data: Partial<RoleData>): Promise<void>`
+   - `deleteRole(roleId: string): Promise<void>`
+2. Guard against deleting a role that is still assigned to at least one user (query `users` collection first).
+3. Mark system roles with `isSystem: true` in Firestore; UI disables edit/delete for those.
+
+### 15.2 Role Form with Permission Matrix
+
+**Tasks:**
+1. Create `src/features/users/components/RoleDialog.tsx` — a shadcn Dialog with:
+   - `name` text field + `description` text field
+   - Permission matrix: rows = permissions grouped by category (`masterData`, `operations`, `analytics`, `admin`, `system`), columns = action checkboxes
+   - Uses TanStack Form + Zod validation (inline parse in `onSubmit`)
+2. Wire `RoleDialog` into `src/routes/_authenticated/admin/roles.tsx`:
+   - Add **Create role** button (visible only if `can('create', 'Role')`)
+   - Each row shows **Edit** / **Delete** actions (disabled for system roles)
+
+### 15.3 Firestore Rules Update
+
+**Tasks:**
+1. Add rules for `roles` collection: only users with the `Role:create/update/delete` permission may write; all authenticated users may read.
+
+**Deliverables:**
+- Create / edit / delete custom roles from the Admin → Roles page
+- Permission matrix UI
+- System roles remain locked
+
+---
+
+## Phase 16: Usage Calculated by Days Checked Out (1 day)
+
+**Goal:** Replace the current manual usage-event logging model with an automatic day-based accumulation. Usage is derived on-the-fly from `movements` records — no extra Firestore writes needed.
+
+### 16.1 Days-Checked-Out Calculation
+
+**Tasks:**
+1. Create `src/features/analytics/services/usageDaysService.ts`:
+   ```typescript
+   // For a single instrument
+   export function calcCheckedOutDays(movements: MovementWithId[]): number
+   // For all instruments (returns Map<instrumentId, days>)
+   export function calcAllCheckedOutDays(movements: MovementWithId[]): Map<string, number>
+   ```
+   Logic:
+   - For each closed movement (has `returnedAt`): `days += differenceInCalendarDays(returnedAt, checkedOutAt)`
+   - For each open movement (no `returnedAt`): `days += differenceInCalendarDays(today, checkedOutAt)`
+   - Sum all movements per instrument.
+2. Replace the existing `usageStats` rebuild logic in `analyticsService.ts` with a call to `calcAllCheckedOutDays`.
+
+### 16.2 UI Updates
+
+**Tasks:**
+1. Instruments list: add a **Days checked out** column (hide if 0, show tooltip with breakdown if available).
+2. Instrument detail / history page (`$instrumentId.tsx`): show total days checked out at the top of the history panel.
+3. Analytics page (`analytics/index.tsx`): replace the old usage-events table with a **Usage by days** table showing `instrumentId`, `name`, `totalDays`, `avgDaysPerCheckout`.
+4. Dashboard KPI: add a "Most-used instrument" card (highest total days).
+
+### 16.3 Depreciate Manual Usage Events (Optional)
+
+**Tasks:**
+1. Keep the `usage_events` collection and `UsageEventDialog` in place for now (they may track practice hours separately), but clearly separate the concepts in the UI: "Usage events" = practice sessions logged manually; "Days checked out" = automatically derived from movements.
+2. Add a UI label clarifying the distinction on the Analytics page.
+
+**Deliverables:**
+- `calcCheckedOutDays` utility
+- Analytics page shows days-based usage
+- Dashboard KPI updated
+- Instrument detail shows total days
+
+---
+
 ## Next Steps
 
 1. Begin with Phase 1: Project Setup

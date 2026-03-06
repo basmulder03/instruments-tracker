@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,6 +21,8 @@ import {
 } from '@/features/people/services/personService'
 import { PersonDialog } from '@/features/people/components/PersonDialog'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
+import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { usePagination } from '@/hooks/usePagination'
 
 export const Route = createFileRoute('/_authenticated/people/')({
   component: PeoplePage,
@@ -41,13 +44,20 @@ function PeoplePage() {
     p.data.naam.toLowerCase().includes(search.toLowerCase()),
   )
 
+  const { paged, PaginationBar } = usePagination(filtered)
+
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['people'] })
   }
 
   async function handleDelete() {
     if (!deleting) return
-    await deletePerson(deleting.id)
+    try {
+      await deletePerson(deleting.id)
+      toast.success(`"${deleting.data.naam}" deleted.`)
+    } catch {
+      toast.error('Failed to delete person.')
+    }
     setDeleting(null)
     invalidate()
   }
@@ -91,9 +101,7 @@ function PeoplePage() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">Loading…</TableCell>
-              </TableRow>
+              <TableSkeleton cols={4} />
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
@@ -101,7 +109,7 @@ function PeoplePage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((p) => (
+              paged.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{p.id}</TableCell>
                   <TableCell className="font-medium">{p.data.naam}</TableCell>
@@ -126,6 +134,7 @@ function PeoplePage() {
           </TableBody>
         </Table>
       </div>
+      <PaginationBar />
 
       <PersonDialog
         person={editing ?? undefined}

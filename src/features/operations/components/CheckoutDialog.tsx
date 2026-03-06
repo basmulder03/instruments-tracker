@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -89,10 +90,13 @@ export function CheckoutDialog({
           firebaseUser!.uid,
           currentUser?.email ?? firebaseUser!.email ?? '',
         )
+        toast.success(`${instrument.data.naam} checked out.`)
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to checkout.')
+        const msg = err instanceof Error ? err.message : 'Failed to checkout.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })

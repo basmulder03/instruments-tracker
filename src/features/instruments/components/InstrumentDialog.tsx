@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -98,10 +99,13 @@ export function InstrumentDialog({
         } else {
           await createInstrument(input, firebaseUser!.uid)
         }
+        toast.success(isEdit ? 'Instrument updated.' : 'Instrument added.')
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save.')
+        const msg = err instanceof Error ? err.message : 'Failed to save.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })

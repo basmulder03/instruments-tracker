@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -52,10 +53,13 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
         } else {
           await createPerson(input, firebaseUser!.uid)
         }
+        toast.success(isEdit ? 'Person updated.' : 'Person added.')
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save.')
+        const msg = err instanceof Error ? err.message : 'Failed to save.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })

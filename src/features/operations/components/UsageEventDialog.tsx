@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -84,10 +85,13 @@ export function UsageEventDialog({
         } else {
           await createUsageEvent(input, uid, email)
         }
+        toast.success(isEdit ? 'Usage updated.' : 'Usage logged.')
         onSaved?.()
         onOpenChange(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save.')
+        const msg = err instanceof Error ? err.message : 'Failed to save.'
+        setError(msg)
+        toast.error(msg)
       }
     },
   })
