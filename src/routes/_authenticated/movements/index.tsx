@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Search, History, Download } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -14,18 +14,22 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { listMovements } from '@/features/operations/services/movementService'
+import { listMovements, type MovementWithId } from '@/features/operations/services/movementService'
 import { listInstruments } from '@/features/instruments/services/instrumentService'
 import { listPeople } from '@/features/people/services/personService'
 import { listLocations } from '@/features/locations/services/locationService'
 import { format, parseISO } from 'date-fns'
 import { downloadCsv } from '@/lib/csvExport'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/movements/')({
   component: MovementsPage,
 })
+
+type SortKey = 'id' | 'instrument' | 'person' | 'checkoutAt' | 'returnAt' | 'status'
 
 function fmtDate(iso: string) {
   if (!iso) return '—'
@@ -54,7 +58,22 @@ function MovementsPage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((m: MovementWithId, key: SortKey) => {
+    if (key === 'id') return m.id
+    if (key === 'instrument') return instrMap[m.data.instrumentId] ?? m.data.instrumentId
+    if (key === 'person') return personMap[m.data.checkoutPersonId] ?? m.data.checkoutPersonId
+    if (key === 'checkoutAt') return m.data.checkoutAt ?? ''
+    if (key === 'returnAt') return m.data.returnAt ?? ''
+    if (key === 'status') return m.data.status
+    return ''
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instrMap, personMap])
+
+  const { sortState, sorted, onSort } = useSorting<MovementWithId, SortKey>(
+    filtered, getValue, 'checkoutAt', 'desc',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function handleExport() {
     const headers = ['ID', 'Instrument', 'Person', 'Checkout location', 'Checked out', 'Return location', 'Returned', 'Status', 'Notes']
@@ -101,20 +120,20 @@ function MovementsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('movements.col.instrument')}</TableHead>
-              <TableHead>{t('movements.col.person')}</TableHead>
-              <TableHead>{t('movements.col.checkedOut')}</TableHead>
-              <TableHead>{t('movements.col.returned')}</TableHead>
+              <SortableHead label={t('common.id')} dir={sortState.key === 'id' ? sortState.dir : null} onClick={() => onSort('id')} />
+              <SortableHead label={t('movements.col.instrument')} dir={sortState.key === 'instrument' ? sortState.dir : null} onClick={() => onSort('instrument')} />
+              <SortableHead label={t('movements.col.person')} dir={sortState.key === 'person' ? sortState.dir : null} onClick={() => onSort('person')} />
+              <SortableHead label={t('movements.col.checkedOut')} dir={sortState.key === 'checkoutAt' ? sortState.dir : null} onClick={() => onSort('checkoutAt')} />
+              <SortableHead label={t('movements.col.returned')} dir={sortState.key === 'returnAt' ? sortState.dir : null} onClick={() => onSort('returnAt')} />
               <TableHead>{t('movements.col.returnLocation')}</TableHead>
-              <TableHead>{t('movements.col.status')}</TableHead>
+              <SortableHead label={t('movements.col.status')} dir={sortState.key === 'status' ? sortState.dir : null} onClick={() => onSort('status')} />
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={8} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {search ? t('movements.empty.search') : t('movements.empty.data')}

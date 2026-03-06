@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -23,11 +23,15 @@ import {
 import { PersonDialog } from '@/features/people/components/PersonDialog'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/people/')({
   component: PeoplePage,
 })
+
+type SortKey = 'id' | 'naam'
 
 function PeoplePage() {
   const { t } = useTranslation()
@@ -46,7 +50,17 @@ function PeoplePage() {
     p.data.naam.toLowerCase().includes(search.toLowerCase()),
   )
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((p: PersonWithId, key: SortKey) => {
+    if (key === 'id') return p.id
+    if (key === 'naam') return p.data.naam
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<PersonWithId, SortKey>(
+    filtered, getValue, 'naam',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['people'] })
@@ -95,8 +109,8 @@ function PeoplePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('common.name')}</TableHead>
+              <SortableHead label={t('common.id')} dir={sortState.key === 'id' ? sortState.dir : null} onClick={() => onSort('id')} />
+              <SortableHead label={t('common.name')} dir={sortState.key === 'naam' ? sortState.dir : null} onClick={() => onSort('naam')} />
               <TableHead>{t('common.notes')}</TableHead>
               <TableHead className="w-20" />
             </TableRow>
@@ -104,7 +118,7 @@ function PeoplePage() {
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={4} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                   {search ? t('people.empty.search') : t('people.empty.data')}

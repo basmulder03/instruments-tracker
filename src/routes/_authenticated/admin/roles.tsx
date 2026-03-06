@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Plus, Pencil, Trash2 } from 'lucide-react'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
@@ -20,7 +20,9 @@ import {
 import type { Role } from '@/lib/types/users'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 import { Can, useAbility } from '@/contexts/AbilityContext'
 import { RoleDialog } from '@/features/users/components/RoleDialog'
 import { deleteRole } from '@/features/users/services/roleService'
@@ -33,6 +35,8 @@ interface RoleWithId {
   id: string
   data: Role
 }
+
+type SortKey = 'name' | 'description' | 'permCount'
 
 async function listRoles(): Promise<RoleWithId[]> {
   const snap = await getDocs(
@@ -64,7 +68,18 @@ function RolesPage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((r: RoleWithId, key: SortKey) => {
+    if (key === 'name') return r.data.name
+    if (key === 'description') return r.data.description
+    if (key === 'permCount') return r.data.permissions.includes('*:*') ? Infinity : r.data.permissions.length
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<RoleWithId, SortKey>(
+    filtered, getValue, 'name',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['roles'] })
@@ -117,9 +132,9 @@ function RolesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('roles.col.role')}</TableHead>
-              <TableHead>{t('roles.col.description')}</TableHead>
-              <TableHead>{t('roles.col.permissions')}</TableHead>
+              <SortableHead label={t('roles.col.role')} dir={sortState.key === 'name' ? sortState.dir : null} onClick={() => onSort('name')} />
+              <SortableHead label={t('roles.col.description')} dir={sortState.key === 'description' ? sortState.dir : null} onClick={() => onSort('description')} />
+              <SortableHead label={t('roles.col.permissions')} dir={sortState.key === 'permCount' ? sortState.dir : null} onClick={() => onSort('permCount')} />
               <TableHead>{t('roles.col.type')}</TableHead>
               {(ability.can('update', 'Role') || ability.can('delete', 'Role')) && (
                 <TableHead className="w-24">{t('common.actions')}</TableHead>
@@ -129,7 +144,7 @@ function RolesPage() {
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={5} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   {search ? t('roles.empty.search') : t('roles.empty.data')}

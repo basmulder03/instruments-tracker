@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, Search, LogIn, LogOut, Wrench, Activity, MoreHorizontal, History, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -38,11 +38,15 @@ import { UsageEventDialog } from '@/features/operations/components/UsageEventDia
 import type { MovementWithId } from '@/features/operations/services/movementService'
 import { downloadCsv } from '@/lib/csvExport'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/instruments/')({
   component: InstrumentsPage,
 })
+
+type SortKey = 'id' | 'naam' | 'type' | 'merk' | 'currentStatus'
 
 type ActiveDialog =
   | { type: 'edit'; instrument: InstrumentWithId }
@@ -87,7 +91,20 @@ function InstrumentsPage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((i: InstrumentWithId, key: SortKey) => {
+    if (key === 'id') return i.id
+    if (key === 'naam') return i.data.naam
+    if (key === 'type') return i.data.type
+    if (key === 'merk') return i.data.merk
+    if (key === 'currentStatus') return i.data.currentStatus
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<InstrumentWithId, SortKey>(
+    filtered, getValue, 'naam',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['instruments'] })
@@ -172,18 +189,18 @@ function InstrumentsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('instruments.col.name')}</TableHead>
-              <TableHead>{t('instruments.col.type')}</TableHead>
-              <TableHead>{t('instruments.col.brand')}</TableHead>
-              <TableHead>{t('instruments.col.status')}</TableHead>
+              <SortableHead label={t('common.id')} dir={sortState.key === 'id' ? sortState.dir : null} onClick={() => onSort('id')} />
+              <SortableHead label={t('instruments.col.name')} dir={sortState.key === 'naam' ? sortState.dir : null} onClick={() => onSort('naam')} />
+              <SortableHead label={t('instruments.col.type')} dir={sortState.key === 'type' ? sortState.dir : null} onClick={() => onSort('type')} />
+              <SortableHead label={t('instruments.col.brand')} dir={sortState.key === 'merk' ? sortState.dir : null} onClick={() => onSort('merk')} />
+              <SortableHead label={t('instruments.col.status')} dir={sortState.key === 'currentStatus' ? sortState.dir : null} onClick={() => onSort('currentStatus')} />
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={6} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   {search ? t('instruments.empty.search') : t('instruments.empty.data')}

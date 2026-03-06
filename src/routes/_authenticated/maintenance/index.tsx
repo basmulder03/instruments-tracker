@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Search, History, Download } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -14,16 +14,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { listAllMaintenance } from '@/features/operations/services/maintenanceService'
+import { listAllMaintenance, type MaintenanceWithId } from '@/features/operations/services/maintenanceService'
 import { listInstruments } from '@/features/instruments/services/instrumentService'
 import { format, parseISO } from 'date-fns'
 import { downloadCsv } from '@/lib/csvExport'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/maintenance/')({
   component: MaintenancePage,
 })
+
+type SortKey = 'id' | 'instrument' | 'category' | 'cost' | 'performedAt'
 
 function fmtDate(iso: string) {
   if (!iso) return '—'
@@ -56,7 +60,21 @@ function MaintenancePage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((r: MaintenanceWithId, key: SortKey) => {
+    if (key === 'id') return r.id
+    if (key === 'instrument') return instrMap[r.data.instrumentId] ?? r.data.instrumentId
+    if (key === 'category') return r.data.category
+    if (key === 'cost') return r.data.cost
+    if (key === 'performedAt') return r.data.performedAt ?? ''
+    return ''
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instrMap])
+
+  const { sortState, sorted, onSort } = useSorting<MaintenanceWithId, SortKey>(
+    filtered, getValue, 'performedAt', 'desc',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function handleExport() {
     const headers = ['ID', 'Instrument', 'Category', 'Cost', 'Major', 'Performed', 'Notes']
@@ -101,12 +119,12 @@ function MaintenancePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('maintenance.col.instrument')}</TableHead>
-              <TableHead>{t('maintenance.col.category')}</TableHead>
-              <TableHead>{t('maintenance.col.cost')}</TableHead>
+              <SortableHead label={t('common.id')} dir={sortState.key === 'id' ? sortState.dir : null} onClick={() => onSort('id')} />
+              <SortableHead label={t('maintenance.col.instrument')} dir={sortState.key === 'instrument' ? sortState.dir : null} onClick={() => onSort('instrument')} />
+              <SortableHead label={t('maintenance.col.category')} dir={sortState.key === 'category' ? sortState.dir : null} onClick={() => onSort('category')} />
+              <SortableHead label={t('maintenance.col.cost')} dir={sortState.key === 'cost' ? sortState.dir : null} onClick={() => onSort('cost')} />
               <TableHead>{t('maintenance.col.major')}</TableHead>
-              <TableHead>{t('maintenance.col.performed')}</TableHead>
+              <SortableHead label={t('maintenance.col.performed')} dir={sortState.key === 'performedAt' ? sortState.dir : null} onClick={() => onSort('performedAt')} />
               <TableHead>{t('common.notes')}</TableHead>
               <TableHead className="w-10" />
             </TableRow>
@@ -114,7 +132,7 @@ function MaintenancePage() {
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={8} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {search ? t('maintenance.empty.search') : t('maintenance.empty.data')}

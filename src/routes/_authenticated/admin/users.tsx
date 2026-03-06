@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,11 +20,15 @@ import { InviteUserDialog } from '@/features/users/components/InviteUserDialog'
 import { EditUserDialog } from '@/features/users/components/EditUserDialog'
 import { SYSTEM_ROLES_MAP } from '@/lib/roles'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/admin/users')({
   component: UsersPage,
 })
+
+type SortKey = 'displayName' | 'email' | 'role' | 'status'
 
 const STATUS_BADGE: Record<string, 'default' | 'secondary' | 'destructive'> = {
   active: 'default',
@@ -52,7 +56,19 @@ function UsersPage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((u: UserWithId, key: SortKey) => {
+    if (key === 'displayName') return u.data.displayName
+    if (key === 'email') return u.data.email
+    if (key === 'role') return SYSTEM_ROLES_MAP.get(u.data.role)?.data.name ?? u.data.role
+    if (key === 'status') return u.data.status
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<UserWithId, SortKey>(
+    filtered, getValue, 'displayName',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['users'] })
@@ -88,17 +104,17 @@ function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('users.col.name')}</TableHead>
-              <TableHead>{t('users.col.email')}</TableHead>
-              <TableHead>{t('users.col.role')}</TableHead>
-              <TableHead>{t('users.col.status')}</TableHead>
+              <SortableHead label={t('users.col.name')} dir={sortState.key === 'displayName' ? sortState.dir : null} onClick={() => onSort('displayName')} />
+              <SortableHead label={t('users.col.email')} dir={sortState.key === 'email' ? sortState.dir : null} onClick={() => onSort('email')} />
+              <SortableHead label={t('users.col.role')} dir={sortState.key === 'role' ? sortState.dir : null} onClick={() => onSort('role')} />
+              <SortableHead label={t('users.col.status')} dir={sortState.key === 'status' ? sortState.dir : null} onClick={() => onSort('status')} />
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={5} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   {search ? t('users.empty.search') : t('users.empty.data')}

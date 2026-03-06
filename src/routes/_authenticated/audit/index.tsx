@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,11 +22,15 @@ import {
 import { format } from 'date-fns'
 import type { Timestamp } from 'firebase/firestore'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/audit/')({
   component: AuditLogPage,
 })
+
+type SortKey = 'timestamp' | 'userEmail' | 'action' | 'entityType'
 
 function fmtTimestamp(ts: Timestamp | null | undefined) {
   if (!ts) return '—'
@@ -50,7 +54,22 @@ function AuditLogPage() {
 
   const entries: AuditLogWithId[] = data?.entries ?? []
 
-  const { paged, PaginationBar } = usePagination(entries)
+  const getValue = useCallback((entry: AuditLogWithId, key: SortKey) => {
+    if (key === 'timestamp') {
+      const ts = entry.data.timestamp as Timestamp | null | undefined
+      return ts ? ts.toDate().getTime() : 0
+    }
+    if (key === 'userEmail') return entry.data.userEmail ?? ''
+    if (key === 'action') return entry.data.action ?? ''
+    if (key === 'entityType') return entry.data.entityType ?? ''
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<AuditLogWithId, SortKey>(
+    entries, getValue, 'timestamp', 'desc',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   const { mutate: runVerify, isPending: verifying } = useMutation({
     mutationFn: async () => {
@@ -110,10 +129,10 @@ function AuditLogPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('audit.col.timestamp')}</TableHead>
-              <TableHead>{t('audit.col.user')}</TableHead>
-              <TableHead>{t('audit.col.action')}</TableHead>
-              <TableHead>{t('audit.col.entityType')}</TableHead>
+              <SortableHead label={t('audit.col.timestamp')} dir={sortState.key === 'timestamp' ? sortState.dir : null} onClick={() => onSort('timestamp')} />
+              <SortableHead label={t('audit.col.user')} dir={sortState.key === 'userEmail' ? sortState.dir : null} onClick={() => onSort('userEmail')} />
+              <SortableHead label={t('audit.col.action')} dir={sortState.key === 'action' ? sortState.dir : null} onClick={() => onSort('action')} />
+              <SortableHead label={t('audit.col.entityType')} dir={sortState.key === 'entityType' ? sortState.dir : null} onClick={() => onSort('entityType')} />
               <TableHead>{t('audit.col.entityId')}</TableHead>
               <TableHead>{t('audit.col.details')}</TableHead>
             </TableRow>

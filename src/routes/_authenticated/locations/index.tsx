@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
@@ -23,11 +23,15 @@ import {
 import { LocationDialog } from '@/features/locations/components/LocationDialog'
 import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog'
 import { TableSkeleton } from '@/components/common/TableSkeleton'
+import { SortableHead } from '@/components/common/SortableHead'
 import { usePagination } from '@/hooks/usePagination'
+import { useSorting } from '@/hooks/useSorting'
 
 export const Route = createFileRoute('/_authenticated/locations/')({
   component: LocationsPage,
 })
+
+type SortKey = 'id' | 'naam' | 'adres'
 
 function LocationsPage() {
   const { t } = useTranslation()
@@ -50,7 +54,18 @@ function LocationsPage() {
     )
   })
 
-  const { paged, PaginationBar } = usePagination(filtered)
+  const getValue = useCallback((l: LocationWithId, key: SortKey) => {
+    if (key === 'id') return l.id
+    if (key === 'naam') return l.data.naam
+    if (key === 'adres') return l.data.adres
+    return ''
+  }, [])
+
+  const { sortState, sorted, onSort } = useSorting<LocationWithId, SortKey>(
+    filtered, getValue, 'naam',
+  )
+
+  const { paged, PaginationBar } = usePagination(sorted)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['locations'] })
@@ -99,9 +114,9 @@ function LocationsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('common.id')}</TableHead>
-              <TableHead>{t('common.name')}</TableHead>
-              <TableHead>{t('locations.col.address')}</TableHead>
+              <SortableHead label={t('common.id')} dir={sortState.key === 'id' ? sortState.dir : null} onClick={() => onSort('id')} />
+              <SortableHead label={t('common.name')} dir={sortState.key === 'naam' ? sortState.dir : null} onClick={() => onSort('naam')} />
+              <SortableHead label={t('locations.col.address')} dir={sortState.key === 'adres' ? sortState.dir : null} onClick={() => onSort('adres')} />
               <TableHead>{t('common.notes')}</TableHead>
               <TableHead className="w-20" />
             </TableRow>
@@ -109,7 +124,7 @@ function LocationsPage() {
           <TableBody>
             {isLoading ? (
               <TableSkeleton cols={5} />
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   {search ? t('locations.empty.search') : t('locations.empty.data')}
