@@ -8,13 +8,9 @@ import {
 } from 'firebase/auth'
 import {
   doc,
+  getDoc,
   setDoc,
   serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs,
-  limit,
 } from 'firebase/firestore'
 import { auth, db } from '@/config/firebase'
 import type { User, UserPreferences } from '@/lib/types/users'
@@ -56,18 +52,15 @@ export async function changePassword(newPassword: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Check if any admin user exists (used to gate the register page)
+// Bootstrap sentinel — /config/bootstrap is publicly readable (no auth needed)
+// so the register page can decide whether to show itself.
 // ---------------------------------------------------------------------------
 
+const BOOTSTRAP_REF = () => doc(db, 'config', 'bootstrap')
+
 export async function hasAdminUser(): Promise<boolean> {
-  const q = query(
-    collection(db, 'users'),
-    where('role', '==', 'admin'),
-    where('status', '==', 'active'),
-    limit(1),
-  )
-  const snap = await getDocs(q)
-  return !snap.empty
+  const snap = await getDoc(BOOTSTRAP_REF())
+  return snap.exists() && snap.data()?.adminCreated === true
 }
 
 // ---------------------------------------------------------------------------
@@ -109,5 +102,14 @@ export async function registerFirstAdmin(
   }
 
   await setDoc(doc(db, 'users', uid), adminDoc)
+
+  // Mark bootstrap complete — publicly readable so the register page can
+  // redirect to login on subsequent visits without querying /users.
+  await setDoc(BOOTSTRAP_REF(), {
+    adminCreated: true,
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+  })
+
   return credential.user
 }

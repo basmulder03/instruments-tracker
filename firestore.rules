@@ -24,14 +24,30 @@ service cloud.firestore {
              );
     }
 
+    // Bootstrap sentinel — publicly readable so the register page can check
+    // whether the first admin has been created without requiring auth.
+    // • create: any authenticated user may write it once (the first admin
+    //   registration writes it immediately after creating their Auth account).
+    // • update/delete: only an admin may touch it afterwards.
+    match /config/bootstrap {
+      allow read:   if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if hasPermission('system', 'manage');
+    }
+
     // Users collection
-    // A user can always read/update their own document (needed on first login
-    // before any permission doc is loaded). All other operations require a
-    // permission check via hasPermission.
+    // • Any authenticated user may read/update their own document (needed on
+    //   first login before the permission system is fully loaded).
+    // • A freshly-created Firebase Auth user may create their own document
+    //   (request.auth.uid == userId) — this covers first-admin registration
+    //   and invitation acceptance, both of which write the doc immediately
+    //   after createUserWithEmailAndPassword().
+    // • Admins may manage any user document via the permission system.
     match /users/{userId} {
       allow read:   if isAuthenticated()
                     && (request.auth.uid == userId || hasPermission('users', 'read'));
-      allow create: if hasPermission('users', 'create');
+      allow create: if isAuthenticated()
+                    && (request.auth.uid == userId || hasPermission('users', 'create'));
       allow update: if isAuthenticated()
                     && (request.auth.uid == userId || hasPermission('users', 'update'));
       allow delete: if hasPermission('users', 'delete');
