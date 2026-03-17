@@ -192,7 +192,7 @@ function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} width={60} />
-                  <Tooltip formatter={(v: number) => euro(v)} />
+                  <Tooltip formatter={(v: number | undefined) => v != null ? euro(v) : ''} />
                   <Area
                     type="monotone"
                     dataKey="value"
@@ -221,7 +221,7 @@ function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `€${v}`} width={60} />
-                  <Tooltip formatter={(v: number) => euro(v)} />
+                  <Tooltip formatter={(v: number | undefined) => v != null ? euro(v) : ''} />
                   <Legend />
                   <Bar dataKey="cost" name={t('dashboard.series.maintenanceCost')} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
