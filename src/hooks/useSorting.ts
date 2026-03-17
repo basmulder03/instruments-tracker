@@ -58,14 +58,16 @@ export function useSorting<T, K extends string>(
       if (av == null) return 1
       if (bv == null) return -1
 
-      let cmp = 0
-      if (typeof av === 'string' && typeof bv === 'string') {
-        cmp = av.localeCompare(bv, undefined, { sensitivity: 'base' })
-      } else if (typeof av === 'boolean' && typeof bv === 'boolean') {
-        cmp = Number(av) - Number(bv)
-      } else {
-        cmp = (av as number) < (bv as number) ? -1 : (av as number) > (bv as number) ? 1 : 0
-      }
+      const cmp =
+        typeof av === 'string' && typeof bv === 'string'
+          ? av.localeCompare(bv, undefined, { sensitivity: 'base' })
+          : typeof av === 'boolean' && typeof bv === 'boolean'
+            ? Number(av) - Number(bv)
+            : (av as number) < (bv as number)
+              ? -1
+              : (av as number) > (bv as number)
+                ? 1
+                : 0
 
       return dir === 'asc' ? cmp : -cmp
     })
