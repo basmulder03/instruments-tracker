@@ -159,7 +159,7 @@ export function InstrumentDialog({
               f.state.meta.errors.map(String),
             )}
             {f.state.meta.errors.length > 0 && (
-              <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+              <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
             )}
           </div>
         )}

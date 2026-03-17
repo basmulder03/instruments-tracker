@@ -51,8 +51,6 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
     description: z.string().min(1, t('roleDialog.validDescription')),
     permissions: z.array(z.string()).min(1, t('roleDialog.validPermissions')),
   })
-  type FormValues = z.infer<typeof schema>
-
   const CATEGORY_LABELS: Record<string, string> = {
     masterData: t('editUserDialog.cat.masterData'),
     operations: t('editUserDialog.cat.operations'),
@@ -61,7 +59,7 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
     system: t('editUserDialog.cat.system'),
   }
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       name: role?.data.name ?? '',
       description: role?.data.description ?? '',

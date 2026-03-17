@@ -77,8 +77,6 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
     permissions: z.array(z.string()),
     status: z.enum(['active', 'inactive', 'suspended']),
   })
-  type FormValues = z.infer<typeof schema>
-
   const STATUS_OPTIONS: { value: 'active' | 'inactive' | 'suspended'; label: string }[] = [
     { value: 'active', label: t('editUserDialog.statusActive') },
     { value: 'inactive', label: t('editUserDialog.statusInactive') },
@@ -93,7 +91,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
     system: t('editUserDialog.cat.system'),
   }
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       role: user.data.role,
       permissions: user.data.permissions,

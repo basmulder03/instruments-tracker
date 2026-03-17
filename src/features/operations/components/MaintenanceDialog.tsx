@@ -72,8 +72,6 @@ export function MaintenanceDialog({
     notes: z.string(),
   })
 
-  type FormValues = z.infer<typeof schema>
-
   const CATEGORIES: { value: Category; label: string }[] = [
     { value: 'PADS', label: t('maintenanceDialog.cat.pads') },
     { value: 'OVERHAUL', label: t('maintenanceDialog.cat.overhaul') },
@@ -82,7 +80,7 @@ export function MaintenanceDialog({
     { value: 'REPAIR_OTHER', label: t('maintenanceDialog.cat.repair') },
   ]
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: record
       ? { ...record.data }
       : {
@@ -175,7 +173,7 @@ export function MaintenanceDialog({
                     onBlur={f.handleBlur}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}
@@ -193,7 +191,7 @@ export function MaintenanceDialog({
                     onBlur={f.handleBlur}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}

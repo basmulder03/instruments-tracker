@@ -87,7 +87,7 @@ export function LocationDialog({ location, open, onOpenChange, onSaved }: Locati
               <div className="space-y-1.5">
                 <Label>{t('locationDialog.name')}</Label>
                 <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} placeholder={t('locationDialog.namePlaceholder')} />
-                {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>}
+                {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>}
               </div>
             )}
           </form.Field>
