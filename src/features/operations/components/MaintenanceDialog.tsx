@@ -72,8 +72,6 @@ export function MaintenanceDialog({
     notes: z.string(),
   })
 
-  type FormValues = z.infer<typeof schema>
-
   const CATEGORIES: { value: Category; label: string }[] = [
     { value: 'PADS', label: t('maintenanceDialog.cat.pads') },
     { value: 'OVERHAUL', label: t('maintenanceDialog.cat.overhaul') },

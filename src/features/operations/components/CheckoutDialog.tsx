@@ -65,8 +65,6 @@ export function CheckoutDialog({
     notes: z.string(),
   })
 
-  type FormValues = z.infer<typeof schema>
-
   const { data: people = [] } = useQuery({ queryKey: ['people'], queryFn: listPeople })
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
 

@@ -63,8 +63,6 @@ export function UsageEventDialog({
     notes: z.string(),
   })
 
-  type FormValues = z.infer<typeof schema>
-
   const form = useForm({
     defaultValues: record
       ? { ...record.data }
