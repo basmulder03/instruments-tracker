@@ -56,7 +56,7 @@ function ProfileSection() {
         setSuccess(true)
       } catch (err: unknown) {
         if (err instanceof z.ZodError) {
-          setError(err.errors[0]?.message ?? 'Validation error')
+          setError(err.issues[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           setError(err.message)
         }
@@ -142,7 +142,7 @@ function PasswordSection() {
         form.reset()
       } catch (err: unknown) {
         if (err instanceof z.ZodError) {
-          setError(err.errors[0]?.message ?? 'Validation error')
+          setError(err.issues[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           if (err.message.includes('requires-recent-login')) {
             setError(t('account.password.reauthError'))

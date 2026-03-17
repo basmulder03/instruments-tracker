@@ -58,7 +58,7 @@ function RegisterPage() {
         navigate({ to: '/dashboard' })
       } catch (err: unknown) {
         if (err instanceof z.ZodError) {
-          setError(err.errors[0]?.message ?? 'Validation error')
+          setError(err.issues[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           if (err.message.includes('email-already-in-use')) {
             setError(t('auth.register.errorEmailInUse'))

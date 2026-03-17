@@ -74,7 +74,7 @@ function AcceptInvitationPage() {
         navigate({ to: '/dashboard' })
       } catch (err: unknown) {
         if (err instanceof z.ZodError) {
-          setSubmitError(err.errors[0]?.message ?? 'Validation error')
+          setSubmitError(err.issues[0]?.message ?? 'Validation error')
         } else if (err instanceof Error) {
           setSubmitError(err.message)
         } else {
