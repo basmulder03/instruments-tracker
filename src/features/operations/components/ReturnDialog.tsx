@@ -70,7 +70,7 @@ export function ReturnDialog({
 
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       returnLocationId: openMovement.data.checkoutLocationId ?? '',
       returnAt: nowLocal(),
@@ -136,7 +136,7 @@ export function ReturnDialog({
                   </SelectContent>
                 </Select>
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}
@@ -154,7 +154,7 @@ export function ReturnDialog({
                   onBlur={f.handleBlur}
                 />
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}

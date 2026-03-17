@@ -82,7 +82,7 @@ export function PersonDialog({ person, open, onOpenChange, onSaved }: PersonDial
               <div className="space-y-1.5">
                 <Label>{t('personDialog.fullName')}</Label>
                 <Input value={f.state.value} onChange={(e) => f.handleChange(e.target.value)} onBlur={f.handleBlur} />
-                {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>}
+                {f.state.meta.errors.length > 0 && <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>}
               </div>
             )}
           </form.Field>

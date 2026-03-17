@@ -143,7 +143,7 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
                   />
                   {field.state.meta.errors.length > 0 && (
                     <p className="text-xs text-destructive">
-                      {field.state.meta.errors[0]?.toString()}
+                      {String(field.state.meta.errors[0])}
                     </p>
                   )}
                 </div>
@@ -172,7 +172,7 @@ export function InviteUserDialog({ onInvited }: InviteUserDialogProps) {
                   </Select>
                   {field.state.meta.errors.length > 0 && (
                     <p className="text-xs text-destructive">
-                      {field.state.meta.errors[0]?.toString()}
+                      {String(field.state.meta.errors[0])}
                     </p>
                   )}
                 </div>

@@ -93,7 +93,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSaved }: EditUserDi
     system: t('editUserDialog.cat.system'),
   }
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       role: user.data.role,
       permissions: user.data.permissions,

@@ -65,7 +65,7 @@ export function UsageEventDialog({
 
   type FormValues = z.infer<typeof schema>
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: record
       ? { ...record.data }
       : {
@@ -130,7 +130,7 @@ export function UsageEventDialog({
                     onBlur={f.handleBlur}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}
@@ -148,7 +148,7 @@ export function UsageEventDialog({
                     placeholder={t('usageDialog.unitTypePlaceholder')}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}
@@ -167,7 +167,7 @@ export function UsageEventDialog({
                   onBlur={f.handleBlur}
                 />
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}

@@ -82,7 +82,7 @@ export function MaintenanceDialog({
     { value: 'REPAIR_OTHER', label: t('maintenanceDialog.cat.repair') },
   ]
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: record
       ? { ...record.data }
       : {
@@ -175,7 +175,7 @@ export function MaintenanceDialog({
                     onBlur={f.handleBlur}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}
@@ -193,7 +193,7 @@ export function MaintenanceDialog({
                     onBlur={f.handleBlur}
                   />
                   {f.state.meta.errors.length > 0 && (
-                    <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                    <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                   )}
                 </div>
               )}

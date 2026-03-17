@@ -70,7 +70,7 @@ export function CheckoutDialog({
   const { data: people = [] } = useQuery({ queryKey: ['people'], queryFn: listPeople })
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       checkoutPersonId: '',
       checkoutLocationId: instrument.data.currentLocationId ?? '',
@@ -137,7 +137,7 @@ export function CheckoutDialog({
                   </SelectContent>
                 </Select>
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}
@@ -164,7 +164,7 @@ export function CheckoutDialog({
                   </SelectContent>
                 </Select>
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}
@@ -182,7 +182,7 @@ export function CheckoutDialog({
                   onBlur={f.handleBlur}
                 />
                 {f.state.meta.errors.length > 0 && (
-                  <p className="text-xs text-destructive">{f.state.meta.errors[0]?.toString()}</p>
+                  <p className="text-xs text-destructive">{String(f.state.meta.errors[0])}</p>
                 )}
               </div>
             )}

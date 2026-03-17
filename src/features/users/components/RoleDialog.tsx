@@ -61,7 +61,7 @@ export function RoleDialog({ role, open, onOpenChange, onSaved }: RoleDialogProp
     system: t('editUserDialog.cat.system'),
   }
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     defaultValues: {
       name: role?.data.name ?? '',
       description: role?.data.description ?? '',
